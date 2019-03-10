@@ -6,6 +6,24 @@
 
 2. [CMake and Make](https://cmake.org/) (>=3.7)
 
+## Installing Requirements
+
+Just run the shell script in the root directory
+
+```bash
+sh prereqs.sh
+```
+
+## Branching
+
+Make sure to create a branch when developing:
+
+```bash
+git checkout -b @name/feature
+```
+
+Then make a pull request when you want to merge to main dev.
+
 ## Building and Running
 
 **1. Make the build directory**
