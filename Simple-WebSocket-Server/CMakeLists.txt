@@ -49,6 +49,9 @@ find_package(OpenSSL REQUIRED)
 target_link_libraries(simple-websocket-server INTERFACE ${OPENSSL_LIBRARIES})
 target_include_directories(simple-websocket-server INTERFACE ${OPENSSL_INCLUDE_DIR})
 
+target_link_libraries(simple-websocket-server INTERFACE /home/yungquant/hsdb/jsoncpp/build/debug/src/lib_json/libjsoncpp.a)
+target_include_directories(simple-websocket-server INTERFACE /home/yungquant/hsdb/jsoncpp/include)
+
 # If Simple-WebSocket-Server is not a sub-project:
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
     add_executable(ws_examples ws_examples.cpp)
@@ -62,9 +65,9 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
         target_link_libraries(wss_examples ${Boost_LIBRARIES})
         target_include_directories(wss_examples PRIVATE ${Boost_INCLUDE_DIR})
     endif()
-    
+
     set(BUILD_TESTING ON)
-    
+
     install(FILES server_ws.hpp client_ws.hpp server_wss.hpp client_wss.hpp crypto.hpp utility.hpp status_code.hpp DESTINATION include/simple-websocket-server)
 endif()
 

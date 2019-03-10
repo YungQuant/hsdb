@@ -1,5 +1,6 @@
 #include "client_wss.hpp"
 #include "server_wss.hpp"
+#include "json/json.h"
 
 using namespace std;
 
@@ -25,10 +26,22 @@ int main() {
     WssClient client("www.bitmex.com/realtime/", false); 
 
   client.on_message = [](shared_ptr<WssClient::Connection> connection, shared_ptr<WssClient::Message> message) {
-    cout << "Client: Message " << i << " received: \"" << message->string() << "\"\ni\n" << endl;
+    cout << "Client: Message " << i << " received: \"" << message->string().c_str() << "\"\ni\n" << endl;
 
+    Json::CharReaderBuilder builder;
+    Json::CharReader* prs = builder.newCharReader();
+    Json::Value msg;
+    std::string errs;
+    bool prs_success = prs->parse(message->string().c_str(), message->string().c_str() + message->string().size(), &msg, &errs);
+    delete prs;
+    if(prs_success){
+        cout << "Client: Message " << i << " parsed. DATA: \"" << msg["data"] << "\"\ni\n" << endl;
+        cout << errs << "PRS_SUCCESS\n" << endl;
+        }
+    else {cout << errs << "PRS_FAIL\n" << endl;}
+    
     i++;
-    if(i > 10){
+    if(i > 100){
         cout << "Client: Sending close connection\n" << endl;
         connection->send_close(1000);
 		//delete i;
@@ -46,7 +59,7 @@ int main() {
     connection->send(send_stream);  
 
 	
-	message = "{\"op\": \"subscribe\", \"args\": [\"orderBookL2:XBTUSD\"]}";
+	message = "{\"op\": \"subscribe\", \"args\": [\"orderBookL2_25:XBTUSD\"]}";
     //string message = "\"help\"";
     cout << "Client: Sending message: \"" << message << "\"\n" << endl;
     *send_stream << message;
