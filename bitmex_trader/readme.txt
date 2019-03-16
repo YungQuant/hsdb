@@ -1,10 +1,9 @@
 BitMEX Trader Instructions
 
-You need to have these installed for this to run
+You need to have [curl, crypto++, cpprest] installed, so run
 
-libcpprest-dev
-libcrypto++-dev
-libcurl4-openssl-dev
+./install.sh
+
 
 Compile the program by just running the shell script
 
@@ -13,9 +12,9 @@ Compile the program by just running the shell script
 
 Run the program with 
 
-./trade
+./trader
 
-As of now, this program subscribes to some authenticated and data
-streams with the websocket and prints the output out. There is
-a lot of data we are working with because I queried it for all
-coins on there.
+This program is able to run a websocket in parallel to a strategy script.
+Several authenticated and regular feeds have been added into the subscription
+list. Additionally there is a working rest api capable of placing and cancelling
+orders.
