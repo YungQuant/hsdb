@@ -2,7 +2,10 @@
 #include "feed.h"
 #include <unistd.h>
 
-void Strategy(feed * self, std::string message){
-    std::cout << "Halleleluyeigh: " << message << std::endl;
-    sleep(10);
+using namespace std;
+
+void Strategy(feed * self){
+    while(true){
+        cout << "Socket Message: " << (*self).socket_msg << endl << endl;
+    }
 }

@@ -1,5 +1,5 @@
 #include "feed.h"
-#include "encrypter.h"
+
 #include "strategy.cpp"
 
 #include <cpprest/ws_client.h>
@@ -20,12 +20,9 @@
 using namespace web;
 using namespace web::websockets::client;
 
-feed::feed(std::string k, std::string s)
+feed::feed(std::string key, std::string secret):trader(key, secret)
 {
-    key = k;
-    secret = s;
     feed_url = "wss://www.bitmex.com/realtime";
-
 }
 
 std::vector<std::string> subscriptions(std::vector<std::string> subs){
@@ -58,7 +55,8 @@ void init_socket(feed * self, std::string sign, std::vector<std::string> items)
         {
             return in_msg.extract_string();
         }).then([&](std::string msg){
-            tasks.push_back(std::async(Strategy, self, msg));
+            //std::cout << msg << std::endl;
+            (*self).socket_msg = msg;
         }).wait();
     }
 
@@ -69,7 +67,7 @@ void init_socket(feed * self, std::string sign, std::vector<std::string> items)
     }
 }
 
-std::vector<std::future<void>> feed::socket()
+std::vector<std::future<void>> feed::start()
 {
     std::vector<std::string> items;
     items.push_back("orderBookL2:XBTUSD");
@@ -79,6 +77,7 @@ std::vector<std::future<void>> feed::socket()
     //items.push_back("position:XBTUSD");
 
     std::vector<std::future<void>> conn;
-    conn.push_back(std::async(init_socket, this, encrypter::__ws__(key, secret), items));
+    conn.push_back(std::async(init_socket, this, trader.auth.__ws__(), items));
+    conn.push_back(std::async(Strategy, this));
     return conn;
 }
