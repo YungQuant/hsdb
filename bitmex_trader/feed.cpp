@@ -72,11 +72,11 @@ void init_socket(feed * self, std::string sign, std::vector<std::string> items)
 std::vector<std::future<void>> feed::socket()
 {
     std::vector<std::string> items;
-    items.push_back("orderBookL2");
-    items.push_back("trade");
-    items.push_back("instrument");
-    items.push_back("margin");
-    items.push_back("position:XBTUSD");
+    items.push_back("orderBookL2:XBTUSD");
+    //items.push_back("trade");
+    //items.push_back("instrument");
+    //items.push_back("margin");
+    //items.push_back("position:XBTUSD");
 
     std::vector<std::future<void>> conn;
     conn.push_back(std::async(init_socket, this, encrypter::__ws__(key, secret), items));
