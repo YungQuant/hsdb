@@ -1,6 +1,6 @@
 BitMEX Trader Instructions
 
-You need to have [curl, crypto++, cpprest] installed, so run
+You need to have [curl, crypto++, cpprest, boost] installed, so run
 
 ./install.sh
 
