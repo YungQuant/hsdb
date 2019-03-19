@@ -79,5 +79,6 @@ std::vector<std::future<void>> feed::start()
     std::vector<std::future<void>> conn;
     conn.push_back(std::async(init_socket, this, trader.auth.__ws__(), items));
     conn.push_back(std::async(Strategy, this));
+    conn.push_back(std::async(Store, this));
     return conn;
 }
