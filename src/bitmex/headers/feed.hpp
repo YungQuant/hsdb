@@ -103,7 +103,7 @@ namespace hsdb { namespace feed {
         items.push_back("position");
 
         std::vector<std::future<void>> conn;
-        conn.push_back(std::async(init_socket, bitmex::auth.__ws__(), items));
+        conn.push_back(std::async(init_socket, encoder::__ws__(), items));
         //conn.push_back(std::async(Strategy, this));
         return conn;
     }

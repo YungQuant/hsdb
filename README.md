@@ -4,11 +4,13 @@
 
 1. [C++ Rest SDK](https://github.com/Microsoft/cpprestsdk)
 
-2. [CMake and Make](https://cmake.org/) (>=3.7)
+2. [Crypto++](https://github.com/weidai11/cryptopp)
 
-3. [Crypto++](https://github.com/weidai11/cryptopp)
+3. [Curl](https://github.com/curl/curl)
 
-4. [Curl](https://github.com/curl/curl)
+4. [OpenSSL](https://github.com/openssl/openssl)
+
+5. [CMake and Make](https://cmake.org/) (>=3.7)
 
 ## Installing Requirements
 
@@ -23,6 +25,9 @@ sh bin/install.cryptopp.sh
 
 # Install curl
 sh bin/install.curl.sh
+
+# Install openssl
+sh bin/install.openssl.sh
 ```
 
 *Please note you might need to instal `libtool`, `autoconf` and `automake` first in order to install curl.*

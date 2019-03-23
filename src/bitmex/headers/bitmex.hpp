@@ -1,19 +1,19 @@
 #include "../shared.hpp"
-#include <encrypt++/encoder.h>
-#include <curl/curl.h>
+
+#include "encoder.hpp"
+#include "curl/curl.h"
 
 #ifndef _BITMEX_H_
 #define _BITMEX_H_ 1
 
 namespace bitmex {
     std::string url = "https://www.bitmex.com/api/v1";
-    encoder auth;
 
     CURL *curl = curl_easy_init();
 	CURLcode res;
 
     void bitmex(std::string key, std::string secret) {
-        auth.set(key, secret);
+        encoder::set(key, secret);
     }
 
     size_t writecallback(void *contents, size_t size, size_t nmemb, void *userp) {
@@ -52,7 +52,7 @@ namespace bitmex {
 
         struct curl_slist *httpHeaders = NULL;
 
-        for(auto ii : auth.rest_auth(VERB, path, body)){
+        for(auto ii : encoder::rest_auth(VERB, path, body)){
             httpHeaders = curl_slist_append(httpHeaders, ii.c_str());
         }
 
@@ -91,14 +91,14 @@ namespace bitmex {
 
     std::string limit_buy(std::string symbol, double price, int quantity) {
         std::string result;
-        std::string body = build_msg({{"symbol",symbol},{"price",numstr(price)},{"orderQty",auth.intstr(quantity)},{"side","Buy"}});
+        std::string body = build_msg({{"symbol",symbol},{"price",numstr(price)},{"orderQty",encoder::intstr(quantity)},{"side","Buy"}});
         result = Request("POST","/order",body,"");
         return result;
     }
 
     std::string limit_sell(std::string symbol, double price, int quantity) {
         std::string result;
-        std::string body = build_msg({{"symbol",symbol},{"price",numstr(price)},{"orderQty",auth.intstr(-quantity)},{"side","Sell"}});
+        std::string body = build_msg({{"symbol",symbol},{"price",numstr(price)},{"orderQty",encoder::intstr(-quantity)},{"side","Sell"}});
         result = Request("POST","/order",body,"");
         return result;
     }
@@ -109,9 +109,9 @@ namespace bitmex {
         for(unsigned i = 0; i < prices.size(); ++i)
         {
             if(side == "Buy"){
-                orders += build_msg({{"symbol",symbol},{"price",numstr(prices[i])},{"orderQty",auth.intstr(qty[i])},{"side","Buy"}});
+                orders += build_msg({{"symbol",symbol},{"price",numstr(prices[i])},{"orderQty",encoder::intstr(qty[i])},{"side","Buy"}});
             } else {
-                orders += build_msg({{"symbol",symbol},{"price",numstr(prices[i])},{"orderQty",auth.intstr(-qty[i])},{"side","Sell"}});
+                orders += build_msg({{"symbol",symbol},{"price",numstr(prices[i])},{"orderQty",encoder::intstr(-qty[i])},{"side","Sell"}});
             }
             orders += ",";
         }

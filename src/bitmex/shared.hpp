@@ -1,9 +1,6 @@
 #ifndef _SHARED_H_
 #define _SHARED_H_ 1
 
-#include "encrypt++/encoder.h"
-#include <curl/curl.h>
-
 #include <cpprest/ws_client.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>

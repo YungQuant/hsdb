@@ -7,5 +7,6 @@ endif (UNIX)
 
 PROJECT(HSDB)
 
+INCLUDE("${CMAKE_CURRENT_LIST_DIR}/cmake/Cryptopp.cmake")
 INCLUDE("${CMAKE_CURRENT_LIST_DIR}/cmake/Libraries.cmake")
 INCLUDE("${CMAKE_CURRENT_LIST_DIR}/cmake/Compile.cmake")
