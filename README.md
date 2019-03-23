@@ -6,13 +6,30 @@
 
 2. [CMake and Make](https://cmake.org/) (>=3.7)
 
+3. [Crypto++](https://github.com/weidai11/cryptopp)
+
+4. [Curl](https://github.com/curl/curl)
+
 ## Installing Requirements
 
-Just run the shell script in the root directory
+If you do not have C++ Rest SDK or Crypto++ installed right now.
 
 ```bash
-sh prereqs.sh
+# Install C++ Rest SDK
+sh bin/install.cpprestsdk.sh
+
+# Install Crypto++
+sh bin/install.cryptopp.sh
+
+# Install curl
+sh bin/install.curl.sh
 ```
+
+*Please note you might need to instal `libtool`, `autoconf` and `automake` first in order to install curl.*
+
+## Dockerized Envrionments
+
+**TBD: Will implement if problems with environments still occurring.**
 
 ## Branching
 
@@ -43,28 +60,26 @@ make
 **3. Run the app:**
 
 ```bash
+# Your binary should be the project you're working on based on below configurable cmake builds
+./your-binary
+```
+
+## Custom CMAKE builds
+
+**To run `/src/bitmex`:**
+
+```bash
+cmake .. -DBITMEX=ON
+make
+# Run bitmex binary
+./bitmex
+```
+
+**To run `/src/examples`:**
+
+```bash
+cmake .. -DEXAMPLES=ON
+make
+# Run examples binary
 ./hsdb
-```
-
-## Example Usage
-
-### Make a HTTP(S) Request:
-
-```c++
-#include "./util/request.hpp"
-
-web::http::http_response response = utility::request("GET", "http://url.com").get();
-web::json::value value = response.extract_json().get();
-```
-
-### Listen to a WS(S) Server:
-
-```c++
-#include "./util/websocket.hpp"
-
-web::websockets::client::websocket_callback_client wss = utility::websocket("wss://url.com).get();
-
-wss.set_message_handler([=](web::websockets::client::websocket_incoming_message message) {
-    std::string messageStr = message.extract_string().get();
-});
 ```
