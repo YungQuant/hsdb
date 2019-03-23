@@ -17,7 +17,7 @@ data::data(int store_len)
 {
     len = store_len;
     obook_sync = false;
-    outcsv.open("XBTUSD.txt");
+    outcsv.open("../../../HSDB_XBTUSD.txt");
 }
 
 auto fetch_value = [](std::map<std::string, std::map<std::string, std::vector<std::string>>> x, std::string symbol, std::string tag, std::string size){
