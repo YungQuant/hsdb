@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <time.h>
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
@@ -38,23 +39,24 @@ boost::property_tree::ptree data::json(std::string msg){
 int data::book(std::string symbol)
 {   
     std::string prices = "", volumes = "";
-
-    auto deposit_slip = [&](std::string & p, std::string & v, std::map<std::string, std::map<std::string, std::vector<std::string>>> data){
-        prices = ""; volumes = "";
-        for(auto kv : bids[symbol]){
-            prices += bids[symbol][kv.first][0] + ",";
-            volumes += bids[symbol][kv.first][1] + ",";
-        }
-        prices.pop_back();
-        volumes.pop_back();
-    };
-
-    deposit_slip(prices, volumes, bids);
+    for(auto kv : bids[symbol]){
+        prices += bids[symbol][kv.first][0] + ",";
+        volumes += bids[symbol][kv.first][1] + ",";
+    }
+     
     outcsv << prices << "\n" << volumes << "\n";
     std::cout << prices << std::endl;
-    deposit_slip(prices, volumes, asks);
+
+    prices = "", volumes = "";
+    for(auto kv : asks[symbol]){
+        prices += asks[symbol][kv.first][0] + ",";
+        volumes += asks[symbol][kv.first][1] + ",";
+    }
+
     outcsv << prices << "\n" << volumes << "\n\n";
     std::cout << prices << std::endl;
+
+    sleep(0.1);
 
     return 0;
 }
