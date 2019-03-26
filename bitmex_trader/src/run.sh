@@ -3,6 +3,6 @@ echo "Compiling BitMEX System............"
 echo "Removing existing file"
 rm -r ./trader
 echo "File removed, compiling..............."
-g++ -o trader trader.cpp bitmex.cpp feed.cpp data.cpp encrypt++/encoder.cpp -lcurl -lcpprest -lcrypto++ -lpthread
+g++ -o trader trader.cpp bitmex.cpp feed.cpp data.cpp encrypt++/encoder.cpp -lcurl -lcpprest -lcrypto++ -lpthread -lcrypto -lboost_system
 echo "BitMEX System Compiled............."
 exit 0
