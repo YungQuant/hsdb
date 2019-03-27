@@ -43,20 +43,22 @@ int data::book(std::string symbol)
         prices += bids[symbol][kv.first][0] + ",";
         volumes += bids[symbol][kv.first][1] + ",";
     }
+    prices.pop_back();
+    volumes.pop_back();
      
     outcsv << prices << "\n" << volumes << "\n";
-    std::cout << prices << std::endl;
+    std::cout << prices.substr(0, 10) << "\n" << volumes.substr(0, 10) << std::endl;
 
     prices = "", volumes = "";
     for(auto kv : asks[symbol]){
         prices += asks[symbol][kv.first][0] + ",";
         volumes += asks[symbol][kv.first][1] + ",";
     }
+    prices.pop_back();
+    volumes.pop_back();
 
-    outcsv << prices << "\n" << volumes << "\n\n";
-    std::cout << prices << std::endl;
-
-    sleep(0.1);
+    outcsv << prices << "\n" << volumes << "\n";
+    std::cout << prices.substr(prices.length() - 10, prices.length()) << "\n" << volumes.substr(volumes.length() - 10, volumes.length()) << std::endl;
 
     return 0;
 }

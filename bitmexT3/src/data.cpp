@@ -15,7 +15,6 @@
 data::data(int store_len)
 {
     len = store_len;
-    sync = false;
     obook_sync = false;
 }
 
@@ -268,14 +267,24 @@ int data::cyclone(boost::property_tree::ptree const & pt)
             if(it->first == "action"){
                 if(it->second.get_value<std::string>() == "partial"){
                     partial_ = true;
+                    partial_collected = true;
                 }
                 if(it->second.get_value<std::string>() == "update"){
+                    if(partial_collected == true){
+                        obook_sync = true;
+                    }
                     update_ = true;
                 }
                 if(it->second.get_value<std::string>() == "insert"){
+                    if(partial_collected == true){
+                        obook_sync = true;
+                    }
                     insert_ = true;
                 }
                 if(it->second.get_value<std::string>() == "delete"){
+                    if(partial_collected == true){
+                        obook_sync = true;
+                    }
                     delete_ = true;
                 }
             }
@@ -287,13 +296,9 @@ int data::cyclone(boost::property_tree::ptree const & pt)
             }
         }
 
-        if(bids["XBTUSD"].size() > 0 && asks["XBTUSD"].size() > 0){
-            sync = true;
-        }
 
         cyclone(it->second);
     }
-    sync = true;
     return 0;
 }
 

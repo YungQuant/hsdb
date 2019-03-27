@@ -49,6 +49,7 @@ void Strategy(feed * self){
                 */
                 counter += 1;
                 data.clear();
+                sleep(10)
             }
         } else {
             std::cout << "Loading Data" << std::endl;

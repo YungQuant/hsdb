@@ -18,7 +18,6 @@ void Strategy(feed * self){
             std::cout << "Loading Data" << std::endl;
         }
 
-
     }
 }
 

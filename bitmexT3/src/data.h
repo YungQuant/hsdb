@@ -17,6 +17,7 @@ class data {
 
     private:
         int len;
+        bool partial_collected;
 
     public:
         data(int store_len);
@@ -26,8 +27,7 @@ class data {
 
         std::map<std::string, std::vector<std::string>> OBOOK;
 
-        bool sync;
-        int obook_sync;
+        bool obook_sync;
 
         boost::property_tree::ptree json(std::string message);
         int cyclone(boost::property_tree::ptree const & pt);
