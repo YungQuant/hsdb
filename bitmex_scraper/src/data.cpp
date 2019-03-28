@@ -18,7 +18,11 @@ data::data(int store_len)
 {
     len = store_len;
     obook_sync = false;
-    outcsv.open("../../../HSDB_XBTUSD.txt");
+    path = "../../../HSDB_XBTUSD";
+    rnd = rand();
+    path += std::to_string(rnd); 
+    path += ".txt";
+    outcsv.open(path);
 }
 
 auto fetch_value = [](std::map<std::string, std::map<std::string, std::vector<std::string>>> x, std::string symbol, std::string tag, std::string size){

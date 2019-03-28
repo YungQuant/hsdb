@@ -75,6 +75,21 @@ def create_forzaDirection_dataset(dataset, distance=1):
 
     return np.array(dataX), np.array(dataY)
 
+def create_forzaSequentialDirection_dataset(dataset, distance=1, lookback=100):
+    dataX, dataY = [], []
+    for i in range(lookback, len(dataset)-distance):
+        datum = dataset[i-lookback:i])
+        for k in datum:
+            for j in k:
+                dataX.append(j)
+        try:
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][60]]) - np.mean([dataset[i][0], dataset[i][60]]))
+        except:
+            print("create_forzaSequentialLinearDirection_dataset FAILED dataset[i]:", dataset[i])
+            print("dataset[i+distance]: ", dataset[i+distance])
+            print(dataset[i+distance], "\n", dataset[i])
+            print(dataset[i+distance][60], dataset[i+distance][0], dataset[i][60], dataset[i][0])
+
 def create_forzaFortuneTeller_dataset(dataset):
     dataX, dataY = [], []
     for i in range(len(dataset)-1):
@@ -96,7 +111,7 @@ print("\nshape(X):", X.shape)
 trainX, trainY, testX, testY = X[:int(np.floor(len(X)/c))], Y[:int(np.floor(len(X)/c))], X[int(np.floor(len(X)/c)):], Y[int(np.floor(len(X)/c)):]
 # print(testX[0], testY[0])
 
-# scaler = MinMaxScaler(feature_range=(-1, 1))
+# scaler = MinMaxScaler(feature_range=(-10, 10))
 # trainX = scaler.fit_transform(trainX)
 trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
 testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
@@ -104,7 +119,7 @@ testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
 print("trainX shape", trainX.shape)
 
 reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=0.0000000001)
-saver = keras.callbacks.ModelCheckpoint(f'hsdbModel0_{timeStr}.h5', monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
+saver = keras.callbacks.ModelCheckpoint(f'hsdbSequentialDirectionalModel0_{timeStr}.h5', monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
 #opt = keras.optimizers.Adam(lr=0.0005, epsilon=0.00000001, decay=0.00001, amsgrad=False)
 opt = "Adam"
 K.tensorflow_backend._get_available_gpus()
@@ -112,7 +127,7 @@ model = Sequential()
 model.add(Dense(Din*4, input_shape=(1, Din*4), activation='selu'))
 model.add(Dense(Din*4, activation='relu'))
 #model.add(LSTM(Din*2, activation='selu', return_sequences=False))
-model.add(Dropout(0.1))
+model.add(Dropout(0.25))
 model.add(Dense(Din, activation='relu'))
 model.add(Flatten())
 model.add(Dense(1, activation='linear'))

@@ -17,6 +17,8 @@ class data {
 
     private:
         int len;
+        int rnd;
+        std::string path;
         std::ofstream outcsv;
         bool partial_collected;
 
