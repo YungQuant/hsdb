@@ -22,12 +22,29 @@ def forza(currency="XBTUSD", depth=30, p=1):
     else:
         fileP = open(path, "r")
         lines = fileP.readlines()
-        for i, line in enumerate(lines[0:int(np.floor(p * len(lines)))]):
-            if i != 0 and i % 4 == 0:
-                data.append(datum)
-                datum = []
-            linex = [float(l) for l in line.split(",")]
-            datum.append(linex[0:depth])
+        lines = lines[0:int(np.floor(p * len(lines)))]
+
+        i = 0
+        while i < len(lines)-3:
+            bidP = lines[i].split(",")[:depth]
+            bidV = lines[i+1].split(",")[:depth]
+            askP = list(reversed(lines[i+2].split(",")))[:depth]
+            askV = list(reversed(lines[i+3].split(",")))[:depth]
+
+            for k in range(depth):
+                datum.append(float(bidP[k]))
+            for k in range(depth):
+                datum.append(float(bidV[k]))
+            for k in range(depth):
+                datum.append(float(askP[k]))
+            for k in range(depth):
+                datum.append(float(askV[k]))
+
+            data.append(datum)
+            datum = []
+
+            i+=4
+
     return data
 
 def create_forzaMidpoint_dataset(dataset):
@@ -44,11 +61,18 @@ def create_forzaSpread_dataset(dataset):
         dataY.append(dataset[i+1][60] - dataset[i+1][0])
     return np.array(dataX), np.array(dataY)
 
-def create_forzaDirection_dataset(dataset):
+def create_forzaDirection_dataset(dataset, distance=1):
     dataX, dataY = [], []
-    for i in range(len(dataset)-1):
+    for i in range(len(dataset)-distance):
         dataX.append(dataset[i])
-        dataY.append(np.mean(dataset[i+1][60], dataset[i+1][0]) - np.mean(dataset[i][60], dataset[i][0]))
+        try:
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][60]]) - np.mean([dataset[i][0], dataset[i][60]]))
+        except:
+            print("create_forzaDirection_dataset FAILED dataset[i]:", dataset[i])
+            print("dataset[i+distance]: ", dataset[i+distance])
+            print(dataset[i+distance], "\n", dataset[i])
+            print(dataset[i+distance][60], dataset[i+distance][0], dataset[i][60], dataset[i][0])
+
     return np.array(dataX), np.array(dataY)
 
 def create_forzaFortuneTeller_dataset(dataset):
@@ -58,50 +82,54 @@ def create_forzaFortuneTeller_dataset(dataset):
         dataY.append([dataset[i+1][0], dataset[i+1][1], dataset[i+1][2], dataset[i+1][3], dataset[i+1][60], dataset[i+1][61], dataset[i+1][62], dataset[i+1][63]])
     return np.array(dataX), np.array(dataY)
 
+# TO-DO: write formatted datasets to file, read from files on training to save reformatting time
+
 timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")
 currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
 errs, passes, fails = [], 0, 0
-Din = 30; perc = 0.5
+Din = 30; dist = 100; perc = 0.2; c = 1.5
 
-X, Y = create_forzaDirection_dataset(forza(currency_pairs[0], Din, perc))
-print("X0:\n", X[0])
-print("shape(X):", X.shape)
+X, Y = create_forzaDirection_dataset(forza(currency_pairs[0], Din, perc), dist)
+print("X0: ", X[0], " Y0 ", Y[0])
+print("\nshape(X):", X.shape)
 
-trainX, trainY, testX, testY = X[:int(np.floor(len(X)/2))], Y[:int(np.floor(len(X)/2))], X[int(np.floor(len(X)/2)):], Y[int(np.floor(len(X)/2)):]
+trainX, trainY, testX, testY = X[:int(np.floor(len(X)/c))], Y[:int(np.floor(len(X)/c))], X[int(np.floor(len(X)/c)):], Y[int(np.floor(len(X)/c)):]
 # print(testX[0], testY[0])
 
 # scaler = MinMaxScaler(feature_range=(-1, 1))
 # trainX = scaler.fit_transform(trainX)
-# trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
-# testX = np.reshape(testX1, (testX1.shape[0], 1, testX1.shape[1]))
+trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
+testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
 # print("scaled training x[-1], y[-1]", trainX[-1], trainY[-1])
-# print("trainX shape", trainX.shape)
+print("trainX shape", trainX.shape)
 
-reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.9, patience=5, min_lr=0.000001)
-opt = keras.optimizers.Adam(lr=0.0009, epsilon=42, decay=0.001, amsgrad=False)
+reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=0.0000000001)
+saver = keras.callbacks.ModelCheckpoint(f'hsdbModel0_{timeStr}.h5', monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
+#opt = keras.optimizers.Adam(lr=0.0005, epsilon=0.00000001, decay=0.00001, amsgrad=False)
+opt = "Adam"
 K.tensorflow_backend._get_available_gpus()
 model = Sequential()
 model.add(Dense(Din*4, input_shape=(1, Din*4), activation='selu'))
 model.add(Dense(Din*4, activation='relu'))
 #model.add(LSTM(Din*2, activation='selu', return_sequences=False))
-model.add(Dropout(0.05))
+model.add(Dropout(0.25))
 model.add(Dense(Din, activation='relu'))
+model.add(Flatten())
 model.add(Dense(1, activation='linear'))
 model.compile(loss="mse", optimizer=opt, metrics=['accuracy'])
-model.fit(trainX, trainY, nb_epoch=10, batch_size=1, verbose=1, callbacks=[reduce_lr])
-model.save(f'hsdbModel0_{timeStr}.h5')
+model.fit(trainX, trainY, nb_epoch=100, batch_size=10, verbose=1, callbacks=[reduce_lr])
 
 # FOR UNIDIMENTIONAL PREDICTIONS VVV
 
 for i in range(len(testX)):
-    sTXi = testX[i]
+    sTXi = np.reshape(testX[i], (testX[i].shape[0], 1, testX[i].shape[1]))
     pY, rY = model.predict(sTXi), testY[i]
     if (pY > 0 and rY > 0) or (pY < 0 and rY < 0):
         passes += 1
     else:
         fails += 1
-    errs.append((abs(pY - rY)/rY) * 100)
+    errs.append(abs(pY - rY)/max([pY, rY]) * 100)
     print("sTXi:", sTXi)
     print("pY:", pY, "rY:", rY, "err %:", errs[-1])
 
-print("\n\n\"Aggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), "Mean % Error:", np.mean(errs))
+print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), "Mean % Error:", np.mean(errs))
