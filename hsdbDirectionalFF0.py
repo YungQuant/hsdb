@@ -20,15 +20,25 @@ def writeDataset(X, Y, path="../HSDB_unnamedDataset.txt"):
     fileP = open(path, "w")
 
     for i in range(len(X)):
-        for k in range(len(X[i])):
-            try:
-                strX, strY = "", ""
+        try:
+            strX, strY = "", ""
+            for k in range(len(X[i])):
+                strX += str(X[i][k])
+                strX += ","
 
+            for j in range(len(Y[i])):
+                strY += str(Y[i][j])
+                strX += ","
 
-            except Exception as e:
-                print(e)
+            strX[-1] = "\n"
+            strY[-1] = "\n"
 
+            fileP.write(strX)
+            fileP.write(strY)
 
+        except Exception as e:
+            print(e)
+        
     fileP.close()
 
 def readDataset(path="../HSDB_unnamedDataset.txt"):
