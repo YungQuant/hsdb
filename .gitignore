@@ -41,4 +41,6 @@ build
 # VS CODE BS
 *.ipch
 
-
+# PYCHARM BS
+*.idea
+*.IDEA
