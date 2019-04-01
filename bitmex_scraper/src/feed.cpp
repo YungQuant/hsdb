@@ -66,7 +66,7 @@ void recorder_socket(feed * self, std::string sign, std::vector<std::string> ite
         {
             return in_msg.extract_string();
         }).then([&](std::string msg){
-            writer << msg << "\n\n";
+            writer << msg << "\n";
         }).wait();
     }
 
@@ -109,8 +109,8 @@ std::vector<std::future<void>> feed::start()
     items.push_back("orderBookL2");
     //items.push_back("trade");
     //items.push_back("instrument");
-    items.push_back("margin");
-    items.push_back("position");
+    //items.push_back("margin");
+    //items.push_back("position");
 
     std::vector<std::future<void>> conn;
     conn.push_back(std::async(init_socket, this, trader.auth.__ws__(), items));

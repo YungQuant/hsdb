@@ -9,7 +9,8 @@ void Strategy(feed * self){
     pyhandler::__init__();
     int counter = 0;
     while(true){
-
+        //self->quant.obook_sync == true && 
+        //self->quant.sync == true
         if(self->quant.obook_sync == true){
             self->quant.book("XBTUSD");
             counter += 1;

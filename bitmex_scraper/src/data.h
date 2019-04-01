@@ -31,6 +31,7 @@ class data {
         std::map<std::string, std::vector<std::string>> OBOOK;
 
         bool obook_sync;
+        bool sync;
 
         boost::property_tree::ptree json(std::string message);
         int cyclone(boost::property_tree::ptree const & pt);

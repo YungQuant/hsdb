@@ -41,7 +41,7 @@ def readDataset(path="../HSDB_unnamedDataset.txt"):
 
         X.append([float(l) for l in linex])
         Y.append([float(l) for l in liney])
-        
+
         i+=2
 
     return X, Y
@@ -136,10 +136,11 @@ class hsdbSequence(Sequence):
 
 timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")
 currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
+Dfiles = ["XBTUSD02"]
 errs, Ps, passes, fails = [], [], 0, 0
-Din = 30; dist = 100; perc = 0.2; c = 2; b = 100; nb_epoch = 50
+Din = 50; dist = 666; perc = 1; c = 1.25; b = 10; nb_epoch = 25
 
-X, Y = create_forzaDirection_dataset(forza(currency_pairs[0], Din, perc), dist)
+X, Y = create_forzaDirection_dataset(forza(Dfiles[0], Din, perc), dist)
 writeDataset(X, Y, "../HSDBdirectionalFF0dataset_thispartgetscut")
 print("X0: ", X[0], " Y0 ", Y[0], "mean/min/max(Y):", np.mean(Y), min(Y), max(Y))
 print("\nshape(X):", X.shape)

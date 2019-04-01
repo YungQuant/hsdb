@@ -18,9 +18,10 @@ data::data(int store_len)
 {
     len = store_len;
     obook_sync = false;
-    path = "../../../HSDB_XBTUSD";
-    rnd = rand();
-    path += std::to_string(rnd); 
+    sync = false;
+    path = "../../../HSDB_XBTUSD03";
+    //rnd = rand();
+    //path += std::to_string(rnd); 
     path += ".txt";
     outcsv.open(path);
 }
@@ -94,7 +95,7 @@ int data::cut_book(boost::property_tree::ptree const & data){
 
         cut_book(it->second);
     }
-
+    sync = true;
     return 0;
 }
 
@@ -135,6 +136,7 @@ int data::refresh_book(boost::property_tree::ptree const & data){
 
         }
     }
+    sync = true;
     return 0;
 }
 
@@ -177,7 +179,7 @@ int data::put_book(boost::property_tree::ptree const & data) {
 
         put_book(it->second);
     }
-
+    sync = true;
     return 0;
 }
 
@@ -220,6 +222,7 @@ int data::twist_book(boost::property_tree::ptree const & data) {
 
         twist_book(it->second);
     }
+    sync = true;
     return 0;
 }
 
@@ -228,12 +231,13 @@ int data::cyclone(boost::property_tree::ptree const & pt)
     boost::property_tree::ptree::const_iterator end = pt.end();
 
     bool partial_ = false, update_ = false, insert_ = false, delete_ = false;
-    bool obook = false;
+    bool obook = false, sync = false;
 
     for(boost::property_tree::ptree::const_iterator it = pt.begin(); it != end; ++it){
         if(partial_ == true){
             if(it->first == "data"){
                 twist_book(it->second);
+                sync = true;
                 partial_ = false;
                 obook = false;
             }
@@ -242,6 +246,7 @@ int data::cyclone(boost::property_tree::ptree const & pt)
         if(insert_ == true){
             if(it->first == "data"){
                 put_book(it->second);
+                sync = true;
                 insert_ = false;
                 obook = false;
             }
@@ -251,6 +256,7 @@ int data::cyclone(boost::property_tree::ptree const & pt)
         if(update_ == true){
             if(it->first == "data"){
                 refresh_book(it->second);
+                sync = true;
                 update_ = false;
                 obook = false;
             }
@@ -259,6 +265,7 @@ int data::cyclone(boost::property_tree::ptree const & pt)
         if(delete_ == true){
             if(it->first == "data"){
                 cut_book(it->second);
+                sync = true;
                 delete_ = false;
                 obook = false;
             }
@@ -301,7 +308,7 @@ int data::cyclone(boost::property_tree::ptree const & pt)
 
         cyclone(it->second);
     }
-
+    sync = true;
     return 0;
 }
 
