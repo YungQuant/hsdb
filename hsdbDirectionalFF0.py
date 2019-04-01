@@ -16,7 +16,7 @@ import time, datetime
 
 
 def writeDirectionalDataset(X, Y, path="../HSDB_unnamedDataset.txt"):
-    path = path.split("_")[0] + str(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")) + ".txt"
+    path = path.split("_")[0] + "_" + str(datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")) + ".txt"
     fileP = open(path, "w")
 
     for i in range(len(X)):
@@ -27,9 +27,6 @@ def writeDirectionalDataset(X, Y, path="../HSDB_unnamedDataset.txt"):
                 strX += ","
 
             strY = str(Y[i])
-
-            strX[-1] = "\n"
-            strY += "\n"
 
             fileP.write(strX)
             fileP.write(strY)
@@ -154,7 +151,7 @@ errs, Ps, passes, fails = [], [], 0, 0
 Din = 30; dist = 666; perc = 1; c = 1.25; b = 100; nb_epoch = 25
 
 X, Y = create_forzaDirection_dataset(forza(path, Din, perc), dist)
-writeDirectionalDataset(X, Y, "../HSDBdirectionalFF0dataset_thispartgetscut")
+writeDirectionalDataset(X, Y, f'../HSDBdirectionalFF0-Din{Din}-dist{dist}-perc{perc}-cut{c}-dataset{path}-_thispartgetscut')
 print("X0: ", X[0], " Y0 ", Y[0], "mean/min/max(Y):", np.mean(Y), min(Y), max(Y))
 print("\nshape(X):", X.shape)
 
