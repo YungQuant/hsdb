@@ -44,3 +44,6 @@ build
 # PYCHARM BS
 *.idea
 *.IDEA
+
+# TENSORFLOW MODELS
+*.h5

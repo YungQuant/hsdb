@@ -101,17 +101,17 @@ def create_forzaSpread_dataset(dataset):
         dataY.append(dataset[i+1][60] - dataset[i+1][0])
     return np.array(dataX), np.array(dataY)
 
-def create_forzaDirection_dataset(dataset, distance=1):
+def create_forzaDirection_dataset(dataset, distance=1, depth=30):
     dataX, dataY = [], []
     for i in range(len(dataset)-distance):
         dataX.append(dataset[i])
         try:
-            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][60]]) - np.mean([dataset[i][0], dataset[i][60]]))
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
         except:
             print("create_forzaDirection_dataset FAILED dataset[i]:", dataset[i])
             print("dataset[i+distance]: ", dataset[i+distance])
             print(dataset[i+distance], "\n", dataset[i])
-            print(dataset[i+distance][60], dataset[i+distance][0], dataset[i][60], dataset[i][0])
+            print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
 
     return np.array(dataX), np.array(dataY)
 
@@ -148,9 +148,9 @@ timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:
 currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
 Dfiles = ["XBTUSD02"]
 errs, Ps, passes, fails = [], [], 0, 0
-Din = 30; dist = 666; perc = 1; c = 1.25; b = 100; nb_epoch = 25
+Din = 10; dist = 666; perc = 1; c = 1.05; b = 1000; nb_epoch = 25
 
-X, Y = create_forzaDirection_dataset(forza(path, Din, perc), dist)
+X, Y = create_forzaDirection_dataset(forza(path, Din, perc), dist, Din)
 writeDirectionalDataset(X, Y, f'../../HSDBdirectionalFF0-Din{Din}-dist{dist}-perc{perc}-cut{c}-dataset{path}-_thispartgetscut')
 print("X0: ", X[0], " Y0 ", Y[0], "mean/min/max(Y):", np.mean(Y), min(Y), max(Y))
 print("\nshape(X):", X.shape)
@@ -176,7 +176,7 @@ model = Sequential()
 model.add(Dense(Din*4, input_shape=(1, Din*4), activation='selu'))
 model.add(Dense(Din*4, activation='relu'))
 #model.add(LSTM(Din*2, activation='selu', return_sequences=False))
-model.add(Dropout(0.1))
+model.add(Dropout(0.33))
 model.add(Dense(Din, activation='relu'))
 model.add(Flatten())
 model.add(Dense(1, activation='linear'))
@@ -188,14 +188,15 @@ model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX
                                           validation_steps=(len(testX) / b),
                                           use_multiprocessing=False,
                                           workers=4,
-                                          max_queue_size=4)
+                                          max_queue_size=4,
+                                          callbacks=[reduce_lr, saver])
 # model.fit(trainX, trainY, nb_epoch=nb_epoch, batch_size=5, verbose=2, callbacks=[reduce_lr, saver])
 
 # FOR UNIDIMENTIONAL PREDICTIONS VVV
 
 for i in range(len(testX)):
     sTXi = np.reshape(testX[i], (testX[i].shape[0], 1, testX[i].shape[1]))
-    pY, rY = model.predict(sTXi), testY[i]
+    pY, rY = model.predict(sTXi)[0][0], testY[i]
     if (pY > 0 and rY > 0) or (pY < 0 and rY < 0):
         passes += 1
     else:
@@ -205,4 +206,4 @@ for i in range(len(testX)):
     print("sTXi:", sTXi)
     print("pY:", pY, "rY:", rY, "err %:", errs[-1])
 
-print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), "Mean % Error:", np.mean(errs), "Mean Pred.:", np.mean(Ps))
+print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), "Mean Perc. Error:", np.mean(errs), "Mean Pred.:", np.mean(Ps))
