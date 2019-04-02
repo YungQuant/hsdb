@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8c479abd-9bdd-418d-980c-13d58d918ae5" name="Default Changelist" comment="" />
+    <list default="true" id="8c479abd-9bdd-418d-980c-13d58d918ae5" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/training/hsdbDirectionalFF0.py" beforeDir="false" afterPath="$PROJECT_DIR$/training/hsdbDirectionalFF0.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,22 +20,22 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="1" />
+          <entry key="py" value="2" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Python" value="1" />
+          <entry key="Python" value="2" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="963" />
+          <entry key="py" value="1043" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="963" />
+          <entry key="Python" value="1043" />
         </counts>
       </usages-collector>
     </session>
@@ -41,10 +43,10 @@
   <component name="FileEditorManager">
     <leaf>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/hsdbDirectionalFF0.py">
+        <entry file="file://$PROJECT_DIR$/training/hsdbDirectionalFF0.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="390">
-              <caret line="29" lean-forward="true" selection-start-line="29" selection-end-line="29" />
+            <state relative-caret-position="529">
+              <caret line="131" column="14" selection-start-line="131" selection-start-column="14" selection-end-line="131" selection-end-column="14" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -61,13 +63,14 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/hsdbDirectionalFF0.py" />
+        <option value="$PROJECT_DIR$/training/hsdbDirectionalFF0.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="284" />
+    <option name="x" value="25" />
     <option name="y" value="22" />
-    <option name="width" value="1389" />
+    <option name="width" value="1648" />
     <option name="height" value="1028" />
   </component>
   <component name="ProjectView">
@@ -81,6 +84,11 @@
             <path>
               <item name="hsdb" type="b2602c69:ProjectViewProjectNode" />
               <item name="hsdb" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="hsdb" type="b2602c69:ProjectViewProjectNode" />
+              <item name="hsdb" type="462c0819:PsiDirectoryNode" />
+              <item name="training" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -118,11 +126,11 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="284" y="22" width="1389" height="1028" extended-state="0" />
+    <frame x="25" y="22" width="1648" height="1028" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.13706207" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Version Control" show_stripe_button="false" />
       <window_info anchor="bottom" id="Python Console" />
@@ -146,8 +154,18 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/hsdbDirectionalFF0.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="29" lean-forward="true" selection-start-line="29" selection-end-line="29" />
+        <state relative-caret-position="360">
+          <caret line="27" lean-forward="true" selection-start-line="27" selection-end-line="27" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/training/hsdbDirectionalFF0.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="529">
+          <caret line="131" column="14" selection-start-line="131" selection-start-column="14" selection-end-line="131" selection-end-column="14" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>

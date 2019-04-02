@@ -50,7 +50,7 @@ def readDataset(path="../..HSDB_unnamedDataset.txt"):
         X.append([float(l) for l in linex])
         Y.append([float(l) for l in liney])
 
-        i+=2
+        i += 2
 
     return X, Y
 
@@ -115,6 +115,23 @@ def create_forzaDirection_dataset(dataset, distance=1, depth=30):
 
     return np.array(dataX), np.array(dataY)
 
+def create_forzaSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100):
+    dataX, dataY = [], []
+    for i in range(lookback, len(dataset)-distance):
+        datum = dataset[i-lookback:i]
+        datum1 = []
+        for k in datum:
+            for j in k:
+                datum1.append(j)
+        try:
+            dataX.append(datum1)
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
+        except:
+            print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
+            print("dataset[i+distance]: ", dataset[i+distance])
+            # print(dataset[i+distance], "\n", dataset[i])
+            print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
+
 def create_forzaFortuneTeller_dataset(dataset):
     dataX, dataY = [], []
     for i in range(len(dataset)-1):
@@ -168,7 +185,8 @@ testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
 print("trainX shape", trainX.shape)
 
 reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.75, patience=10, min_lr=0.0000000001)
-saver = keras.callbacks.ModelCheckpoint(f'../models/hsdbDirectionalFFModel0_{timeStr}.h5', monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
+saver = keras.callbacks.ModelCheckpoint(f'../models/hsdbDirectionalFFModel0_{timeStr}.h5',
+                                        monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
 #opt = keras.optimizers.Adam(lr=0.0005, epsilon=0.00000001, decay=0.00001, amsgrad=False)
 opt = "Adam"
 K.tensorflow_backend._get_available_gpus()
