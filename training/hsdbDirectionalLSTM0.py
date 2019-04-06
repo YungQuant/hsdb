@@ -149,6 +149,26 @@ def create_forzaSequentialDirection_dataset(dataset, distance=1, depth=30, lookb
 
     return np.array(dataX), np.array(dataY)
 
+def create_forzaSparseSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100, sparcity=10):
+    dataX, dataY = [], []
+    for i in range(lookback, len(dataset)-distance):
+        if i % sparcity == 0:
+            datum1 = []
+            for k in dataset[i-lookback:i]:
+                for j in k:
+                    datum1.append(j)
+            try:
+                dataX.append(datum1)
+                # dataX.append([j for j in k for k in dataset[i-lookback:i]])
+                dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
+            except:
+                print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
+                print("dataset[i+distance]: ", dataset[i+distance])
+                # print(dataset[i+distance], "\n", dataset[i])
+                print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
+
+    return np.array(dataX), np.array(dataY)
+
 def create_forzaNerfedSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100):
     dataX, dataY = [], []
     for i in range(lookback, len(dataset)-distance):
@@ -240,12 +260,12 @@ timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:
 currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
 Dfiles = ["XBTUSD02"]
 errs, Ps, passes, fails = [], [], 0, 0
-Din = 10; dist = 333; perc = 1; c = 1.5; b = 64; nb_epoch = 20; l = 100
+Din = 10; dist = 333; perc = 1; c = 1.5; b = 32; nb_epoch = 10; l = 30; opt = "Adam"; s = 100
 
-X, Y = create_forzaSequentialDirection_dataset(forza(path, Din, perc), dist, Din, l)
-writeDirectionalDataset(X, Y, f'../../HSDBdirectionalLSTM0-Din{Din}-dist{dist}-perc{perc}-cut{c}-dataset{path}-lookback{l}-_thispartgetscut')
+X, Y = create_forzaSparseSequentialDirection_dataset(forza(path, Din, perc), dist, Din, l, s)
+writeDirectionalDataset(X, Y, f'../../HSDBdirectionalLSTM0-Din{Din}-dist{dist}-perc{perc}-sparcity{s}-dataset{path}-lookback{l}-_thispartgetscut')
 print("X0: ", X[0], " Y0 ", Y[0], "mean/min/max(Y):", np.mean(Y), min(Y), max(Y))
-print("\nshape(X):", X.shape)
+# print("\nshape(X):", X.shape)
 
 trainX, trainY, testX, testY = X[:int(np.floor(len(X)/c))], Y[:int(np.floor(len(X)/c))], X[int(np.floor(len(X)/c)):], Y[int(np.floor(len(X)/c)):]
 # print(testX[0], testY[0])
@@ -257,20 +277,21 @@ trainX, trainY, testX, testY = X[:int(np.floor(len(X)/c))], Y[:int(np.floor(len(
 trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
 testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
 # print("scaled training x[-1], y[-1]", trainX[-1], trainY[-1])
-print("trainX shape", trainX.shape)
+# print("trainX shape", trainX.shape, "testX shape", testX.shape)
 
-reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.75, patience=5, min_lr=0.0000000001)
-saver = keras.callbacks.ModelCheckpoint(f'../models/hsdbDirectionalLSTMModel0_{timeStr}.h5',
+# reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.75, patience=5, min_lr=0.0000000001)
+saver = keras.callbacks.ModelCheckpoint(f'../models/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_{timeStr}.h5',
                                         monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
 #opt = keras.optimizers.Adam(lr=0.0005, epsilon=0.00000001, decay=0.00001, amsgrad=False)
-opt = "Adam"
+
 K.tensorflow_backend._get_available_gpus()
 model = Sequential()
 model.add(Dense(Din*4*l, input_shape=(1, Din*4*l), activation='relu'))
+# model.add(Dropout(0.25))
 # model.add(Dense(Din*4*l, input_shape=(1, Din*4*l)))
 # model.add(Dense(Din*4*l, activation='relu'))
 model.add(LSTM(Din*4*l, activation='selu', return_sequences=False))
-model.add(Dropout(0.25))
+# model.add(Dropout(0.33))
 model.add(Dense(Din, activation='relu'))
 # model.add(Flatten())
 model.add(Dense(1, activation='linear'))
@@ -283,7 +304,7 @@ model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX
                                           use_multiprocessing=False,
                                           workers=8,
                                           max_queue_size=2,
-                                          callbacks=[saver, reduce_lr])
+                                          callbacks=[saver])
 # model.fit(trainX, trainY, nb_epoch=nb_epoch, batch_size=5, verbose=2, callbacks=[reduce_lr, saver])
 
 # FOR UNIDIMENTIONAL PREDICTIONS VVV
@@ -301,5 +322,6 @@ for i in range(len(testX)):
     print("pY:", pY, "rY:", rY, "err %:", errs[-1])
 
 print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), 
-    "Mean Perc. Error:", np.mean(errs), "Mean Pred.:", np.mean(Ps), "Mean Y:", np.mean(testY),
-    "Y Describe:", sp.describe(Y))
+    "Mean Perc. Error:", np.mean(errs))
+    
+print("\nPs Describe:", sp.describe(Ps), "\nY Describe:", sp.describe(Y), "\ntrainY Describe:", sp.describe(trainY), "\ntestY Describe:", sp.describe(testY))
