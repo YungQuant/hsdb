@@ -4,6 +4,7 @@ import requests, pandas as pan
 from sklearn.preprocessing import MinMaxScaler
 from sklearn import svm, linear_model
 from sklearn.metrics import mean_squared_error
+import scipy.stats as sp
 import keras
 from keras.callbacks import ReduceLROnPlateau
 from keras.utils import Sequence
@@ -71,19 +72,28 @@ def forza(currency="XBTUSD", depth=30, p=1):
 
         i = 0
         while i < len(lines)-3:
-            bidP = lines[i].split(",")[:depth]
-            bidV = lines[i+1].split(",")[:depth]
-            askP = list(reversed(lines[i+2].split(",")))[:depth]
-            askV = list(reversed(lines[i+3].split(",")))[:depth]
+            # bidP = lines[i].split(",")[:depth]
+            # bidV = lines[i+1].split(",")[:depth]
+            # askP = list(reversed(lines[i+2].split(",")))[:depth]
+            # askV = list(reversed(lines[i+3].split(",")))[:depth]
+
+            # for k in range(depth):
+            #     datum.append(float(bidP[k]))
+            # for k in range(depth):
+            #     datum.append(float(bidV[k]))
+            # for k in range(depth):
+            #     datum.append(float(askP[k]))
+            # for k in range(depth):
+            #     datum.append(float(askV[k]))
 
             for k in range(depth):
-                datum.append(float(bidP[k]))
+                datum.append(float(lines[i].split(",")[:depth][k]))
             for k in range(depth):
-                datum.append(float(bidV[k]))
+                datum.append(float(lines[i+1].split(",")[:depth][k]))
             for k in range(depth):
-                datum.append(float(askP[k]))
+                datum.append(float(list(reversed(lines[i+2].split(",")))[:depth][k]))
             for k in range(depth):
-                datum.append(float(askV[k]))
+                datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k]))
 
             data.append(datum)
             datum = []
@@ -129,6 +139,7 @@ def create_forzaSequentialDirection_dataset(dataset, distance=1, depth=30, lookb
                 datum1.append(j)
         try:
             dataX.append(datum1)
+            # dataX.append([j for j in k for k in dataset[i-lookback:i]])
             dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
         except:
             print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
@@ -157,6 +168,43 @@ def create_forzaNerfedSequentialDirection_dataset(dataset, distance=1, depth=30,
 
     return np.array(dataX), np.array(dataY)
 
+def create_forzaPartiallyNerfedSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100):
+    dataX, dataY = [], []
+    for i in range(lookback, len(dataset)-distance):
+        if dataset[i] != dataset[i-1]:
+            datum1 = []
+            for k in dataset[i-lookback:i]:
+                for j in k:
+                    datum1.append(j)
+            try:
+                dataX.append(datum1)
+                dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
+            except:
+                print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
+                print("dataset[i+distance]: ", dataset[i+distance])
+                # print(dataset[i+distance], "\n", dataset[i])
+                print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
+
+    return np.array(dataX), np.array(dataY)
+
+def create_forzaCondensedSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100):
+    dataX, dataY = [], []
+    for i in range(lookback, len(dataset)-distance):
+        datum1 = []
+        for k in dataset[i-lookback:i]:
+            for j in k:
+                datum1.append(j)
+        try:
+            dataX.append(datum1)
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
+        except:
+            print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
+            print("dataset[i+distance]: ", dataset[i+distance])
+            # print(dataset[i+distance], "\n", dataset[i])
+            print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
+
+    return np.array(dataX), np.array(dataY)
+
 def create_forzaFortuneTeller_dataset(dataset):
     dataX, dataY = [], []
     for i in range(len(dataset)-1):
@@ -180,9 +228,11 @@ class hsdbSequence(Sequence):
 
         return np.array(batch_x), np.array(batch_y)
 
-# TO-DO: write formatted datasets to file, read from files on training to save reformatting time
-# TO-DO: train in chunks to avoid overloading 8 GB GPU RAM (safe @ {Din = 30; dist = 100; perc = 0.2; c = 2} on 20 GB file)
-# TO_DO: mkdir models && mkdir models/models && mkdir models/training && FORMAT THE FUCKING FILEPATHS :(
+# TO-DO 50%: write formatted datasets to file, read from files on training to save reformatting time
+# TO-DO 100%: train in chunks to avoid overloading 8 GB GPU RAM (safe @ {Din = 30; dist = 100; perc = 0.2; c = 2} on 20 GB file)
+# TO_DO 100%: mkdir models && mkdir models/models && mkdir models/training && FORMAT THE FUCKING FILEPATHS :(
+# TO-DO: train inline on file stream
+# TO-DO: paralellize or c-ify preprocessing
 
 path = input("Enter data path:")
 
@@ -190,9 +240,9 @@ timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:
 currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
 Dfiles = ["XBTUSD02"]
 errs, Ps, passes, fails = [], [], 0, 0
-Din = 30; dist = 666; perc = 1; c = 1.5; b = 100; nb_epoch = 50; l = 20
+Din = 10; dist = 333; perc = 1; c = 1.5; b = 64; nb_epoch = 20; l = 100
 
-X, Y = create_forzaNerfedSequentialDirection_dataset(forza(path, Din, perc), dist, Din, l)
+X, Y = create_forzaSequentialDirection_dataset(forza(path, Din, perc), dist, Din, l)
 writeDirectionalDataset(X, Y, f'../../HSDBdirectionalLSTM0-Din{Din}-dist{dist}-perc{perc}-cut{c}-dataset{path}-lookback{l}-_thispartgetscut')
 print("X0: ", X[0], " Y0 ", Y[0], "mean/min/max(Y):", np.mean(Y), min(Y), max(Y))
 print("\nshape(X):", X.shape)
@@ -209,17 +259,18 @@ testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
 # print("scaled training x[-1], y[-1]", trainX[-1], trainY[-1])
 print("trainX shape", trainX.shape)
 
-reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.75, patience=10, min_lr=0.0000000001)
+reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.75, patience=5, min_lr=0.0000000001)
 saver = keras.callbacks.ModelCheckpoint(f'../models/hsdbDirectionalLSTMModel0_{timeStr}.h5',
                                         monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
 #opt = keras.optimizers.Adam(lr=0.0005, epsilon=0.00000001, decay=0.00001, amsgrad=False)
 opt = "Adam"
 K.tensorflow_backend._get_available_gpus()
 model = Sequential()
-model.add(Dense(Din*4*l, input_shape=(1, Din*4*l), activation='selu'))
-model.add(Dense(Din*4, activation='relu'))
-model.add(Dropout(0.33))
-model.add(LSTM(Din*2, activation='selu', return_sequences=False))
+model.add(Dense(Din*4*l, input_shape=(1, Din*4*l), activation='relu'))
+# model.add(Dense(Din*4*l, input_shape=(1, Din*4*l)))
+# model.add(Dense(Din*4*l, activation='relu'))
+model.add(LSTM(Din*4*l, activation='selu', return_sequences=False))
+model.add(Dropout(0.25))
 model.add(Dense(Din, activation='relu'))
 # model.add(Flatten())
 model.add(Dense(1, activation='linear'))
@@ -230,9 +281,9 @@ model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX
                                           validation_data=hsdbSequence(testX, testY, b),
                                           validation_steps=(len(testX) / b),
                                           use_multiprocessing=False,
-                                          workers=4,
-                                          max_queue_size=4,
-                                          callbacks=[saver])
+                                          workers=8,
+                                          max_queue_size=2,
+                                          callbacks=[saver, reduce_lr])
 # model.fit(trainX, trainY, nb_epoch=nb_epoch, batch_size=5, verbose=2, callbacks=[reduce_lr, saver])
 
 # FOR UNIDIMENTIONAL PREDICTIONS VVV
@@ -249,4 +300,6 @@ for i in range(len(testX)):
     print("sTXi:", sTXi)
     print("pY:", pY, "rY:", rY, "err %:", errs[-1])
 
-print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), "Mean Perc. Error:", np.mean(errs), "Mean Pred.:", np.mean(Ps), "Mean Y:", np.mean(testY))
+print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), 
+    "Mean Perc. Error:", np.mean(errs), "Mean Pred.:", np.mean(Ps), "Mean Y:", np.mean(testY),
+    "Y Describe:", sp.describe(Y))
