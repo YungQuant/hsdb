@@ -18,9 +18,7 @@ class data {
 
     private:
         int len;
-        int time_len;
         
-
     public:
         data(int store_len, int dt);
         std::map<std::string, std::map<std::string, std::vector<std::string>>> bids;
@@ -33,8 +31,9 @@ class data {
 
         std::vector<std::vector<double>> Z;
        
+        int time_len;
         bool sync;
-        int plot_sync;
+        bool plot_sync;
         int quant_sync;
         std::vector<double> lemp, hemp, temp;
 
@@ -47,7 +46,7 @@ class data {
 
         int book(std::string symbol);
         int write_mesh(std::string symbol);
- 
+        int clean_table(int limit);
 
         int prep_book(std::ofstream & writer, std::string symbol);
 

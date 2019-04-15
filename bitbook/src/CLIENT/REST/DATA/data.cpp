@@ -23,7 +23,7 @@ data::data(int store_len, int dt)
     time_len = dt;
     sync = false;
     quant_sync = false;
-    plot_sync = 0;
+    plot_sync = false;
 
 }
 
@@ -69,10 +69,26 @@ boost::property_tree::ptree data::json(std::string msg){
 int data::__call__(std::string symbol)
 {
 
-    write_mesh(symbol);
-    XY = NPMESHGRID(Z);
-    //std::cout << XY["X"].size() << " works btc" << std::endl;
-    
+    if(Z.size() < time_len + 20){
+        write_mesh(symbol);
+        XY = NPMESHGRID(Z);
+        plot_sync = true;
+    } else {
+        plot_sync = false;
+        clean_table(20);
+    }
+
+
+    return 0;
+}
+
+int data::clean_table(int length){
+    for(int i = 0; i < length; ++i){
+        XY["X"].erase(XY["X"].begin()+i);
+        XY["Y"].erase(XY["Y"].begin()+i);
+        Z.erase(Z.begin()+i);
+    }
+    plot_sync = true;
     return 0;
 }
 

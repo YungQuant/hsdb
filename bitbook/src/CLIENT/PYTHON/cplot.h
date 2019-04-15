@@ -213,6 +213,47 @@ namespace cplot {
   }
 
   template<typename Numeric>
+  void plot_scatter(const std::vector<::std::vector<Numeric>> & x, const std::vector<::std::vector<Numeric>> & y,const std::vector<::std::vector<Numeric>> & z, std::string color)
+  {
+
+    detail::_interpreter::get();
+
+    PyObject *xx = array2D(x);
+    PyObject *yy = array2D(y);
+    PyObject *zz = array2D(z);
+
+    PyObject *args = PyTuple_New(3);
+    PyTuple_SetItem(args, 0, xx);
+    PyTuple_SetItem(args, 1, yy);
+    PyTuple_SetItem(args, 2, zz);
+
+    PyObject *kwargs = PyDict_New();
+
+    PyObject *gca_kwargs = PyDict_New();
+    PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("3d"));
+
+    PyObject *gca = PyObject_GetAttrString(detail::_interpreter::get().func_fig, "gca");
+    Py_INCREF(gca);
+
+    PyObject *axis = PyObject_Call(gca, detail::_interpreter::get().empty_tuple, gca_kwargs);
+    Py_INCREF(axis);
+
+    Py_DECREF(gca);
+    Py_DECREF(gca_kwargs);
+
+    PyObject * plot_surfacex = PyObject_GetAttrString(axis, "scatter");
+    PyObject * res = PyObject_Call(plot_surfacex, args, kwargs);
+
+    Py_DECREF(axis);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    Py_DECREF(res);
+  }
+
+
+
+
+  template<typename Numeric>
   void set_yticklabels(const std::vector<Numeric> & labels)
   {
 
@@ -247,7 +288,37 @@ namespace cplot {
     Py_DECREF(res);
   }
 
+  void view_init(double def_angle, double angle) 
+  {
+    detail::_interpreter::get();
 
+    PyObject *args = PyTuple_New(2);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(def_angle));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble(angle));
+
+    PyObject *kwargs = PyDict_New();
+    PyObject *gca_kwargs = PyDict_New();
+    PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("3d"));
+
+    PyObject *gca = PyObject_GetAttrString(detail::_interpreter::get().func_fig, "gca");
+    Py_INCREF(gca);
+
+    PyObject *axis = PyObject_Call(gca, detail::_interpreter::get().empty_tuple, gca_kwargs);
+    Py_INCREF(axis);
+
+    Py_DECREF(gca);
+    Py_DECREF(gca_kwargs);
+
+    PyObject * plot_surfacex = PyObject_GetAttrString(axis, "view_init");
+    PyObject * res = PyObject_Call(plot_surfacex, args, kwargs);
+
+    Py_DECREF(axis);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    Py_DECREF(res);
+    
+
+  }
 
   inline void clf() {
       PyObject *res = PyObject_CallObject(
@@ -276,6 +347,32 @@ namespace cplot {
       Py_DECREF(res);
   }
 
+  inline void grid(bool flag)
+  {
+      PyObject* pyflag = flag ? Py_True : Py_False;
+      Py_INCREF(pyflag);
 
+      PyObject* args = PyTuple_New(1);
+      PyTuple_SetItem(args, 0, pyflag);
+
+      PyObject *kwargs = PyDict_New();
+      PyObject *gca_kwargs = PyDict_New();
+      PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("3d"));
+
+      PyObject *gca = PyObject_GetAttrString(detail::_interpreter::get().func_fig, "gca");
+      Py_INCREF(gca);
+
+      PyObject *axis = PyObject_Call(gca, detail::_interpreter::get().empty_tuple, gca_kwargs);
+      Py_INCREF(axis);
+
+      Py_DECREF(gca);
+      Py_DECREF(gca_kwargs);
+
+      PyObject * plot_surfacex = PyObject_GetAttrString(axis, "grid");
+      PyObject * res = PyObject_Call(plot_surfacex, args, kwargs);
+
+      Py_DECREF(args);
+      Py_DECREF(res);
+  }
 
 }
