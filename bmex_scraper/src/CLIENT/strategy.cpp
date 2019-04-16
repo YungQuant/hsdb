@@ -14,6 +14,9 @@ void Strategy(feed * self, std::ofstream & writer){
     while(self->sync == true){
         if(self->quant.sync == true && self->quant.quant_sync == true){
             (*self).quant.prep_book(writer, "XBTUSD");
+            usleep(100000);
+            self->quant.updates++;
+            std::cout << "Update: " << self->quant.updates << "\n";
         }
     }
 }

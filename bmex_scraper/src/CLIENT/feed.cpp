@@ -29,6 +29,7 @@ feed::feed(std::string key, std::string secret, bool ON_SWITCH):trader(key, secr
     feed_url = "wss://www.bitmex.com/realtime";
     is_on = ON_SWITCH;
     sync = true;
+    updates = 0;
     //pyhandler::__init__();
 }
 

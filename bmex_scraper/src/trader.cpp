@@ -22,7 +22,7 @@ int main()
     std::cout << "Bitmex Trading System" << std::endl << std::endl;
     
     std::ofstream writer;
-    writer.open("../../../HSDB-BMEX_XBTUSD1_10up.txt");
+    writer.open("../../../HSDB-BMEX_XBTUSD2_100kus.txt");
 
     while(true){
         try {
