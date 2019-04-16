@@ -25,7 +25,7 @@ void Strategy(feed * self, std::ofstream & writer){
             cplot::clf();
             cplot::plot_surface(self->quant.XY["X"], self->quant.XY["Y"], self->quant.Z, heatmap, "");
             cplot::set_yticklabels(self->quant.lemp);
-            cplot::pause(0.00001);
+            cplot::pause(0.1);
             
         }
     }

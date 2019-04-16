@@ -23,7 +23,7 @@ using namespace web;
 using namespace web::websockets::client;
 
 feed::feed(std::string key, std::string secret, bool ON_SWITCH):trader(key, secret),
-                                                                quant(30, 50)
+                                                                quant(30, 30)
 {
     feed_url = "wss://www.bitmex.com/realtime";
     is_on = ON_SWITCH;

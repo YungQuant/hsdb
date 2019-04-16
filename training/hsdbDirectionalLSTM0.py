@@ -60,15 +60,16 @@ def readDataset(path="../..HSDB_unnamedDataset.txt"):
 
     return X, Y
 
-def forza(currency="XBTUSD", depth=30, p=1):
-    path = f'../../HSDB_{currency}.txt'
+def forza(currency="XBTUSD", depth=30, p=1, volOnly=False):
+    # path = f'../../HSDB_{currency}.txt'
+    path = "../../HSDB-BMEX_XBTUSD1_10up.txt"
     data, datum = [], []
     if os.path.isfile(path) == False:
         print(f'could not source {path} data')
     else:
         fileP = open(path, "r")
         lines = fileP.readlines()
-        lines = lines[0:int(np.floor(p * len(lines)))]
+        lines = lines[2:int(np.floor(p * len(lines)))]
 
         i = 0
         while i < len(lines)-3:
@@ -85,13 +86,14 @@ def forza(currency="XBTUSD", depth=30, p=1):
             #     datum.append(float(askP[k]))
             # for k in range(depth):
             #     datum.append(float(askV[k]))
-
-            for k in range(depth):
-                datum.append(float(lines[i].split(",")[:depth][k]))
+            if volOnly == False:
+                for k in range(depth):
+                    datum.append(float(lines[i].split(",")[:depth][k]))
             for k in range(depth):
                 datum.append(float(lines[i+1].split(",")[:depth][k]))
-            for k in range(depth):
-                datum.append(float(list(reversed(lines[i+2].split(",")))[:depth][k]))
+            if volOnly == False:
+                for k in range(depth):
+                    datum.append(float(list(reversed(lines[i+2].split(",")))[:depth][k]))
             for k in range(depth):
                 datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k]))
 
@@ -260,12 +262,12 @@ timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:
 currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
 Dfiles = ["XBTUSD02"]
 errs, Ps, passes, fails = [], [], 0, 0
-Din = 10; dist = 333; perc = 1; c = 1.5; b = 32; nb_epoch = 10; l = 30; opt = "Adam"; s = 100
+Din = 20; dist = 333; perc = 0.99; c = 1.5; b = 32; nb_epoch = 1000; l = 30; opt = "Adam"; s = 10
 
-X, Y = create_forzaSparseSequentialDirection_dataset(forza(path, Din, perc), dist, Din, l, s)
-writeDirectionalDataset(X, Y, f'../../HSDBdirectionalLSTM0-Din{Din}-dist{dist}-perc{perc}-sparcity{s}-dataset{path}-lookback{l}-_thispartgetscut')
+X, Y = create_forzaSparseSequentialDirection_dataset(forza(path, Din, perc, volOnly=False), dist, Din, l, s)
+writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-Din{Din}-dist{dist}-perc{perc}-sparcity{s}-dataset{path}-lookback{l}-_thispartgetscut')
 print("X0: ", X[0], " Y0 ", Y[0], "mean/min/max(Y):", np.mean(Y), min(Y), max(Y))
-# print("\nshape(X):", X.shape)
+#print("\nshape(X):", X.shape)
 
 trainX, trainY, testX, testY = X[:int(np.floor(len(X)/c))], Y[:int(np.floor(len(X)/c))], X[int(np.floor(len(X)/c)):], Y[int(np.floor(len(X)/c)):]
 # print(testX[0], testY[0])
@@ -277,22 +279,24 @@ trainX, trainY, testX, testY = X[:int(np.floor(len(X)/c))], Y[:int(np.floor(len(
 trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
 testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
 # print("scaled training x[-1], y[-1]", trainX[-1], trainY[-1])
-# print("trainX shape", trainX.shape, "testX shape", testX.shape)
+print("trainX shape", trainX.shape, "testX shape", testX.shape)
 
-# reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.75, patience=5, min_lr=0.0000000001)
+reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.95, patience=50, min_lr=0.0000000001)
 saver = keras.callbacks.ModelCheckpoint(f'../models/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_{timeStr}.h5',
                                         monitor='val_acc', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
-#opt = keras.optimizers.Adam(lr=0.0005, epsilon=0.00000001, decay=0.00001, amsgrad=False)
+opt = keras.optimizers.Adam(lr=0.00666, epsilon=0.00000001, decay=0.00001, amsgrad=False)
 
 K.tensorflow_backend._get_available_gpus()
 model = Sequential()
-model.add(Dense(Din*4*l, input_shape=(1, Din*4*l), activation='relu'))
-# model.add(Dropout(0.25))
-# model.add(Dense(Din*4*l, input_shape=(1, Din*4*l)))
+# model.add(Dense(Din*4*l, input_shape=(1, Din*4*l), activation='relu'))
+# model.add(Dropout(0.5))
+model.add(Dense(Din*4*l, input_shape=(1, Din*4*l)))
 # model.add(Dense(Din*4*l, activation='relu'))
 model.add(LSTM(Din*4*l, activation='selu', return_sequences=False))
-# model.add(Dropout(0.33))
-model.add(Dense(Din, activation='relu'))
+model.add(LeakyReLU(alpha=0.666))
+# model.add(Dropout(0.5))
+# model.add(LSTM(Din*4*l, activation='selu', return_sequences=False))
+# model.add(Dense(Din, activation='relu'))
 # model.add(Flatten())
 model.add(Dense(1, activation='linear'))
 model.compile(loss="mse", optimizer=opt, metrics=['accuracy'])
@@ -304,7 +308,7 @@ model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX
                                           use_multiprocessing=False,
                                           workers=8,
                                           max_queue_size=2,
-                                          callbacks=[saver])
+                                          callbacks=[reduce_lr])
 # model.fit(trainX, trainY, nb_epoch=nb_epoch, batch_size=5, verbose=2, callbacks=[reduce_lr, saver])
 
 # FOR UNIDIMENTIONAL PREDICTIONS VVV
@@ -318,10 +322,12 @@ for i in range(len(testX)):
         fails += 1
     Ps.append(pY)
     errs.append(abs(pY - rY)/max([pY, rY]) * 100)
-    print("sTXi:", sTXi)
-    print("pY:", pY, "rY:", rY, "err %:", errs[-1])
+    # print("sTXi:", sTXi)
+    # print("pY:", pY, "rY:", rY, "err %:", errs[-1])
 
 print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), 
     "Mean Perc. Error:", np.mean(errs))
     
-print("\nPs Describe:", sp.describe(Ps), "\nY Describe:", sp.describe(Y), "\ntrainY Describe:", sp.describe(trainY), "\ntestY Describe:", sp.describe(testY))
+print("\nPs Describe:", sp.describe(Ps), "Ps Median:", list(sorted(Ps))[int(np.floor(len(Ps)/2))], "\nY Describe:", sp.describe(Y), "\ntrainY Describe:", sp.describe(trainY), "\ntestY Describe:", sp.describe(testY))
+
+model.save(f'../models/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_{timeStr}.h5')

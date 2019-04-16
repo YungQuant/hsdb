@@ -1,6 +1,6 @@
 #include "./feed.h"
 #include "./strategy.cpp"
-#include "./PYTHON/pyhandler.h"
+//#include "./PYTHON/pyhandler.h"
 
 #include <cpprest/ws_client.h>
 #include <boost/property_tree/json_parser.hpp>
@@ -29,7 +29,7 @@ feed::feed(std::string key, std::string secret, bool ON_SWITCH):trader(key, secr
     feed_url = "wss://www.bitmex.com/realtime";
     is_on = ON_SWITCH;
     sync = true;
-    pyhandler::__init__();
+    //pyhandler::__init__();
 }
 
 std::vector<std::string> subscriptions(std::vector<std::string> subs){
@@ -96,11 +96,11 @@ std::vector<std::future<void>> feed::start(std::ofstream & writer)
 
     std::vector<std::future<void>> conn;
     if(is_on == true){
-        writer << "MODE: LIVE\n";
+        //writer << "MODE: LIVE\n";
         conn.push_back(std::async(init_socket, this, trader.auth.__ws__(), items));
         conn.push_back(std::async(Strategy, this, std::ref(writer)));
     } else {
-        writer << "MODE: TEST\n" << std::endl;
+        //writer << "MODE: TEST\n" << std::endl;
         conn.push_back(std::async(TestStrategy, this));
     }
     return conn;
