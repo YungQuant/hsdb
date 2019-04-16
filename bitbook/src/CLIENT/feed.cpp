@@ -23,7 +23,11 @@ using namespace web;
 using namespace web::websockets::client;
 
 feed::feed(std::string key, std::string secret, bool ON_SWITCH):trader(key, secret),
+<<<<<<< HEAD
                                                                 quant(20, 47)
+=======
+                                                                quant(30, 30)
+>>>>>>> a0c7fcde4dc9b8533496b5e8323aaa4dfad500ea
 {
     feed_url = "wss://www.bitmex.com/realtime";
     is_on = ON_SWITCH;

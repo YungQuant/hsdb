@@ -22,6 +22,7 @@ void Strategy(feed * self, std::ofstream & writer){
     int counter = 0;
 
     while(self->sync == true){
+<<<<<<< HEAD
         for(auto & i : {-20,-10,-5,0,5,10,20,10,5,0,-5,-10}){
             if(self->quant.sync == true && self->quant.quant_sync == true){
 
@@ -42,6 +43,17 @@ void Strategy(feed * self, std::ofstream & writer){
                     counter += 1;
                 }
             }
+=======
+        if(self->quant.sync == true && self->quant.quant_sync == true){
+
+            self->quant.__call__("XBTUSD");
+
+            cplot::clf();
+            cplot::plot_surface(self->quant.XY["X"], self->quant.XY["Y"], self->quant.Z, heatmap, "");
+            cplot::set_yticklabels(self->quant.lemp);
+            cplot::pause(0.1);
+            
+>>>>>>> a0c7fcde4dc9b8533496b5e8323aaa4dfad500ea
         }
     }
     cplot::show();

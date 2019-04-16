@@ -67,7 +67,7 @@ void TStrategy(feed * self, std::ofstream & writer){
     }
 
     std::cout << "STRATEGY HAS CLOSED AT: " << self->trader.auth.nonce() << std::endl;
-    writer << "\nSocket has to reboot buddy, now the time is: " << self->trader.auth.nonce() << std::endl;
+    //writer << "\nSocket has to reboot buddy, now the time is: " << self->trader.auth.nonce() << std::endl;
     
 }
 

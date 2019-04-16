@@ -18,6 +18,7 @@ data::data(int store_len)
     len = store_len;
     sync = false;
     quant_sync = false;
+    updates = 0;
 }
 
 boost::property_tree::ptree data::json(std::string msg){
@@ -30,26 +31,31 @@ boost::property_tree::ptree data::json(std::string msg){
 
 int data::prep_book(std::ofstream & writer, std::string symbol)
 {   
-    std::string prices = "", volumes = "";
-    for(auto kv : bids[symbol]){
-        prices += bids[symbol][kv.first][0] + ",";
-        volumes += bids[symbol][kv.first][1] + ",";
+    if (updates % 10 == 0){
+        std::string prices = "", volumes = "";
+        for(auto kv : bids[symbol]){
+            prices += bids[symbol][kv.first][0] + ",";
+            volumes += bids[symbol][kv.first][1] + ",";
+        }
+        prices.pop_back();
+        volumes.pop_back();
+        
+        writer << prices << "\n" << volumes << "\n";
+
+        prices = "", volumes = "";
+        for(auto kv : asks[symbol]){
+            prices += asks[symbol][kv.first][0] + ",";
+            volumes += asks[symbol][kv.first][1] + ",";
+        }
+        prices.pop_back();
+        volumes.pop_back();
+
+        writer << prices << "\n" << volumes << "\n";
     }
-    prices.pop_back();
-    volumes.pop_back();
-    
-    writer << prices << "\n" << volumes << "\n";
 
-    prices = "", volumes = "";
-    for(auto kv : asks[symbol]){
-        prices += asks[symbol][kv.first][0] + ",";
-        volumes += asks[symbol][kv.first][1] + ",";
-    }
-    prices.pop_back();
-    volumes.pop_back();
-
-    writer << prices << "\n" << volumes << "\n";
-
+    std::cout << "Update: " << updates << "\n";
+    if (updates > 100000) updates = 0;
+    updates++;
     return 0;
 }
 

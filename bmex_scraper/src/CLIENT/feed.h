@@ -21,6 +21,7 @@ class feed {
         data quant;
 
         bool sync;
+        int updates;
 
         std::string socket_msg;
         std::string feed_url;
