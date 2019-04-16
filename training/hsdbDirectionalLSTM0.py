@@ -60,7 +60,7 @@ def readDataset(path="../..HSDB_unnamedDataset.txt"):
 
     return X, Y
 
-def forza(currency="XBTUSD", depth=30, p=1, volOnly=False):
+def forza(currency="XBTUSD", depth=30, p=1, s=1, volOnly=False):
     # path = f'../../HSDB_{currency}.txt'
     path = "../../HSDB-BMEX_XBTUSD1_10up.txt"
     data, datum = [], []
@@ -71,7 +71,7 @@ def forza(currency="XBTUSD", depth=30, p=1, volOnly=False):
         lines = fileP.readlines()
         lines = lines[2:int(np.floor(p * len(lines)))]
 
-        i = 0
+        i, k = 0, 0
         while i < len(lines)-3:
             # bidP = lines[i].split(",")[:depth]
             # bidV = lines[i+1].split(",")[:depth]
@@ -86,21 +86,23 @@ def forza(currency="XBTUSD", depth=30, p=1, volOnly=False):
             #     datum.append(float(askP[k]))
             # for k in range(depth):
             #     datum.append(float(askV[k]))
-            if volOnly == False:
+            if k % s == 0:
+                if volOnly == False:
+                    for k in range(depth):
+                        datum.append(float(lines[i].split(",")[:depth][k]))
                 for k in range(depth):
-                    datum.append(float(lines[i].split(",")[:depth][k]))
-            for k in range(depth):
-                datum.append(float(lines[i+1].split(",")[:depth][k]))
-            if volOnly == False:
+                    datum.append(float(lines[i+1].split(",")[:depth][k]))
+                if volOnly == False:
+                    for k in range(depth):
+                        datum.append(float(list(reversed(lines[i+2].split(",")))[:depth][k]))
                 for k in range(depth):
-                    datum.append(float(list(reversed(lines[i+2].split(",")))[:depth][k]))
-            for k in range(depth):
-                datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k]))
+                    datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k]))
 
-            data.append(datum)
-            datum = []
+                data.append(datum)
+                datum = []
 
             i+=4
+            k+=1
 
     return data
 
@@ -264,7 +266,7 @@ Dfiles = ["XBTUSD02"]
 errs, Ps, passes, fails = [], [], 0, 0
 Din = 20; dist = 333; perc = 0.99; c = 1.5; b = 32; nb_epoch = 1000; l = 30; opt = "Adam"; s = 10
 
-X, Y = create_forzaSparseSequentialDirection_dataset(forza(path, Din, perc, volOnly=False), dist, Din, l, s)
+X, Y = create_forzaSequentialDirection_dataset(forza(path, Din, perc, s, volOnly=False), dist, Din, l)
 writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-Din{Din}-dist{dist}-perc{perc}-sparcity{s}-dataset{path}-lookback{l}-_thispartgetscut')
 print("X0: ", X[0], " Y0 ", Y[0], "mean/min/max(Y):", np.mean(Y), min(Y), max(Y))
 #print("\nshape(X):", X.shape)
