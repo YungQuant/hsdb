@@ -34,6 +34,7 @@ namespace cplot {
       PyObject * func_pause;
       PyObject * func_tight_layout;
       PyObject * empty_tuple;
+      PyObject * style_picker;
 
       static _interpreter& get() {
         static _interpreter ctx;
@@ -75,6 +76,7 @@ namespace cplot {
           matplotlib = PyImport_Import(matplotlibname);
           PyObject_CallMethod(matplotlib, const_cast<char*>("use"), const_cast<char*>("s"), s_backend.c_str());
 
+
           mpl_toolkits = PyImport_Import(mpl_toolkitsname);
           axis3d = PyImport_Import(axis3dname);
           pyplot = PyImport_Import(pyplotname);
@@ -88,6 +90,12 @@ namespace cplot {
           clear_plot = PyObject_GetAttrString(pyplot, "clf");
           func_pause = PyObject_GetAttrString(pyplot, "pause");
           func_tight_layout = PyObject_GetAttrString(pyplot, "tight_layout");
+          style_picker = PyObject_GetAttrString(pyplot, "style");
+          PyObject * yg = PyObject_GetAttrString(style_picker, "use");
+          PyObject *arguments = PyTuple_New(1);
+          PyObject *otherArgs = PyDict_New();
+          PyTuple_SetItem(arguments, 0, PyString_FromString("dark_background"));
+          PyObject_Call(yg, arguments, otherArgs);
 
         }
         ~_interpreter() {
@@ -205,6 +213,12 @@ namespace cplot {
 
     PyObject * plot_surfacex = PyObject_GetAttrString(axis, "plot_surface");
     PyObject * res = PyObject_Call(plot_surfacex, args, kwargs);
+    PyObject * axis_off = PyObject_GetAttrString(axis, "axis");
+
+    PyObject * axis_args = PyTuple_New(1);
+    PyObject * axis_kwargs = PyDict_New();
+    PyTuple_SetItem(axis_args, 0, PyString_FromString("off"));
+    //PyObject_Call(axis_off, axis_args, axis_kwargs);
 
     Py_DECREF(axis);
     Py_DECREF(args);
@@ -288,7 +302,7 @@ namespace cplot {
     Py_DECREF(res);
   }
 
-  void view_init(double def_angle, double angle) 
+  void view_init(double def_angle, double angle)
   {
     detail::_interpreter::get();
 
@@ -316,7 +330,7 @@ namespace cplot {
     Py_DECREF(args);
     Py_DECREF(kwargs);
     Py_DECREF(res);
-    
+
 
   }
 

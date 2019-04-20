@@ -82,6 +82,21 @@ int data::__call__(std::string symbol)
     return 0;
 }
 
+int data::fix_price_axis()
+{
+    int n = 9;
+    double a = lemp[0];
+    double b = lemp[lemp.size() - 1];
+    double dx = (b - a) / (n - 1);
+    dx = floor(dx * 100) / 100;
+    //std::cout << "DX: " << dx << std::endl;
+    lemp.clear();
+    for(int i = 0; i < n; ++i){
+        lemp.push_back(a + i * dx);
+    }
+    return 0;
+}
+
 int data::clean_table(int length){
     for(int i = 0; i < length; ++i){
         XY["X"].erase(XY["X"].begin()+i);
@@ -133,7 +148,8 @@ int data::write_mesh(std::string symbol)
         dt += 1;
     }
     Z.push_back(temp);
-    
+    fix_price_axis();
+
     return 0;
 }
 

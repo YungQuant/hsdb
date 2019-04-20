@@ -15,7 +15,7 @@ class feed {
         bool is_on;
 
     public:
-        feed(std::string key, std::string secret, bool ON_SWITCH);
+        feed(std::string key, std::string secret, bool ON_SWITCH, int depth, int limit);
 
         bitmex trader;
         data quant;
