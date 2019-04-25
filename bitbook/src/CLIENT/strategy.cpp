@@ -14,7 +14,7 @@ void TestStrategy(feed * self) {
 
 void Strategy(feed * self, std::ofstream & writer){
     std::cout << "Strategy Script Initialized" << std::endl;
-    cplot::tight_layout();
+
 
 
     std::vector<std::string> heatmap = {"viridis", "gnuplot", "hsv"};
@@ -22,20 +22,20 @@ void Strategy(feed * self, std::ofstream & writer){
     int counter = 0;
 
     while(self->sync == true){
-<<<<<<< HEAD
         for(auto & i : {-20,-10,-5,0,5,10,20,10,5,0,-5,-10}){
             if(self->quant.sync == true && self->quant.quant_sync == true){
 
-                self->quant.__call__("XBTUSD");
+                self->quant.__call__("ETHUSD");
 
                 if(self->quant.plot_sync == true){
                     if(counter == heatmap.size()){
                         counter = 0;
                     }
                     cplot::clf();
+                    cplot::tight_layout();
                     cplot::plot_surface(self->quant.XY["X"], self->quant.XY["Y"], self->quant.Z, heatmap[counter], "");
                     //cplot::plot_scatter(self->quant.XY["X"], self->quant.XY["Y"], self->quant.Z, colors[counter]);
-
+                    //std::cout << self->quant.lemp[0] << "\t" << self->quant.lemp[self->quant.lemp.size() - 1] << std::endl;
                     cplot::set_yticklabels(self->quant.lemp);
                     cplot::view_init(31, i);
                     cplot::grid(false);
@@ -43,17 +43,6 @@ void Strategy(feed * self, std::ofstream & writer){
                     counter += 1;
                 }
             }
-=======
-        if(self->quant.sync == true && self->quant.quant_sync == true){
-
-            self->quant.__call__("XBTUSD");
-
-            cplot::clf();
-            cplot::plot_surface(self->quant.XY["X"], self->quant.XY["Y"], self->quant.Z, heatmap, "");
-            cplot::set_yticklabels(self->quant.lemp);
-            cplot::pause(0.1);
-            
->>>>>>> a0c7fcde4dc9b8533496b5e8323aaa4dfad500ea
         }
     }
     cplot::show();

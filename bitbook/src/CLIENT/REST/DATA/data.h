@@ -47,6 +47,7 @@ class data {
         int book(std::string symbol);
         int write_mesh(std::string symbol);
         int clean_table(int limit);
+        int fix_price_axis();
 
         int prep_book(std::ofstream & writer, std::string symbol);
 
