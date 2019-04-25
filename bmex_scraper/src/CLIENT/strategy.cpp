@@ -13,10 +13,12 @@ void TestStrategy(feed * self) {
 void Strategy(feed * self, std::ofstream & writer){
     while(self->sync == true){
         if(self->quant.sync == true && self->quant.quant_sync == true){
-            (*self).quant.prep_book(writer, "XBTUSD");
-            usleep(100000);
-            self->quant.updates++;
-            std::cout << "Update: " << self->quant.updates << "\n";
+            try{
+                (*self).quant.prep_book(writer, "XBTUSD");
+                usleep(100000);
+                self->quant.updates++;
+                std::cout << "Update: " << self->quant.updates << "\n";
+            } catch (...) {std::cout << "Restarting @ Strategy on Update: " << self->quant.updates << "\n";}
         }
     }
 }
@@ -73,53 +75,6 @@ void TStrategy(feed * self, std::ofstream & writer){
     //writer << "\nSocket has to reboot buddy, now the time is: " << self->trader.auth.nonce() << std::endl;
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

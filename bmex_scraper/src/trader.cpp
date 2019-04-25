@@ -17,15 +17,19 @@ int main()
     std::string key = "1qO8kPEtCpEReAhbGsdgmapK";
 	std::string secret = "ia0apGZ3tevgVB1p9JaenBkovOHffgdviZOwRds0lOTVUpPc";
     
-    std::vector<std::future<void>> tasks;
+    
 
     std::cout << "Bitmex Trading System" << std::endl << std::endl;
     
-    std::ofstream writer;
-    writer.open("../../../HSDB-BMEX_XBTUSD2_100kus.txt");
+    
 
     while(true){
         try {
+            std::vector<std::future<void>> tasks;
+
+            std::ofstream writer;
+            writer.open("../../../HSDB-BMEX_XBTUSD666_100kus.txt");
+
             feed bitmex(key, secret, on);
             std::cout << "Started: " << bitmex.trader.auth.nonce() << std::endl;
             //writer << "START: " << bitmex.trader.auth.nonce() << "\n";
@@ -35,11 +39,14 @@ int main()
             }
             std::cout << "Restarting: " << bitmex.trader.auth.nonce() << std::endl;
             //writer << "RESTARTING: " << bitmex.trader.auth.nonce() << "\n";
+            writer.close();
             tasks.clear();
-            sleep(10);
-        } catch (const std::exception& e) {std::cout << "Restarting: ";}
+            sleep(15);
+        } catch (...) {std::cout << "Restarting @ Main" << "\n";}
+
+        sleep(15);
     } 
 
-    writer.close();
+    
     return 0;
 }
