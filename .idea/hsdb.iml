@@ -4,5 +4,11 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="yungbet-eos-contract-master" />
+    <orderEntry type="module" module-name="tools" />
+    <orderEntry type="module" module-name="prop" />
+    <orderEntry type="module" module-name="gan-finance" />
+    <orderEntry type="module" module-name="keras-transformer" />
+    <orderEntry type="module" module-name="c9MMenv" />
   </component>
 </module>

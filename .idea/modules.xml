@@ -2,7 +2,13 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$USER_HOME$/c9MMenv/.idea/c9MMenv.iml" filepath="$USER_HOME$/c9MMenv/.idea/c9MMenv.iml" />
+      <module fileurl="file://$USER_HOME$/gan-finance/.idea/gan-finance.iml" filepath="$USER_HOME$/gan-finance/.idea/gan-finance.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/hsdb.iml" filepath="$PROJECT_DIR$/.idea/hsdb.iml" />
+      <module fileurl="file://$USER_HOME$/keras-transformer/.idea/keras-transformer.iml" filepath="$USER_HOME$/keras-transformer/.idea/keras-transformer.iml" />
+      <module fileurl="file://$USER_HOME$/prop/.idea/prop.iml" filepath="$USER_HOME$/prop/.idea/prop.iml" />
+      <module fileurl="file://$USER_HOME$/tools/.idea/tools.iml" filepath="$USER_HOME$/tools/.idea/tools.iml" />
+      <module fileurl="file://$USER_HOME$/Documents/yungbet-eos-contract-master/.idea/yungbet-eos-contract-master.iml" filepath="$USER_HOME$/Documents/yungbet-eos-contract-master/.idea/yungbet-eos-contract-master.iml" />
     </modules>
   </component>
 </project>
