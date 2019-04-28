@@ -25,7 +25,8 @@ void Strategy(feed * self, std::ofstream & writer){
         for(auto & i : {-20,-10,-5,0,5,10,20,10,5,0,-5,-10}){
             if(self->quant.sync == true && self->quant.quant_sync == true){
 
-                self->quant.__call__("ETHUSD");
+                self->quant.__call__("XBTUSD");
+
 
                 if(self->quant.plot_sync == true){
                     if(counter == heatmap.size()){
@@ -42,8 +43,17 @@ void Strategy(feed * self, std::ofstream & writer){
                     cplot::pause(0.0026);
                     counter += 1;
                 }
+
+				for(auto & hh : self->quant.bidAverage){
+					std::cout << hh << "\t";
+				}
+				for(auto & ii : self->quant.askAverage){
+					std::cout << ii << "\t";
+				}	
+				std::cout << "Bid and Ask Vol Data Size: " << self->quant.bid_vol_len << "\t" << self->quant.ask_vol_len << std::endl;
+                std::cout << std::endl;
             }
         }
     }
-    cplot::show();
+    //cplot::show();
 }
