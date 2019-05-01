@@ -41,7 +41,10 @@ def forza(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, scale=10000, volOn
                 for k in range(depth):
                     datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k])/scale)
 
-                data.append(datum)
+                if volOnly == False and datum[0] > 1000 and (datum[depth-1] < datum[depth*3-1]):
+                    data.append(datum)
+                else:
+                    i+=1
                 datum = []
 
             i+=4
@@ -135,10 +138,10 @@ def plot3(a, b, c):
     plt.show()
 
 
-Dfiles = ["XBTUSD02", "BMEX_XBTUSD2_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD3_10kus", "BMEX_XBTUSD5_10kus"]
+Dfiles = ["XBTUSD02", "BMEX_XBTUSD666_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD3_10kus", "BMEX_XBTUSD5_10kus"]
 X = []
-path = Dfiles[-1]
-x, Y = create_forzaSequentialDirection_dataset(forza(currency=path, depth=10, p=1, s=10, scale=100000000, volOnly=False), distance=100, depth=10, lookback=10, vO=True)
+path = Dfiles[1]
+x, Y = create_forzaSequentialDirection_dataset(forza(currency=path, depth=10, p=1, s=10, scale=100000000, volOnly=False), distance=10, depth=10, lookback=1, vO=True)
 
 for k in x:
     X.append(sum(k))

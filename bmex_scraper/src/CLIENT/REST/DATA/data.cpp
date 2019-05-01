@@ -31,6 +31,7 @@ boost::property_tree::ptree data::json(std::string msg){
 
 int data::prep_book(std::ofstream & writer, std::string symbol)
 {   
+    writer.open("../../../HSDB-BMEX_XBTUSD666_1mus.txt", std::ofstream::app);
     std::string prices = "", volumes = "";
     for(auto kv : bids[symbol]){
         prices += bids[symbol][kv.first][0] + ",";
@@ -41,6 +42,7 @@ int data::prep_book(std::ofstream & writer, std::string symbol)
     
     writer << prices << "\n" << volumes << "\n";
 
+
     prices = "", volumes = "";
     for(auto kv : asks[symbol]){
         prices += asks[symbol][kv.first][0] + ",";
@@ -50,6 +52,7 @@ int data::prep_book(std::ofstream & writer, std::string symbol)
     volumes.pop_back();
 
     writer << prices << "\n" << volumes << "\n";
+    writer.close();
     return 0;
 }
 

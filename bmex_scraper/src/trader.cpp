@@ -28,7 +28,6 @@ int main()
             std::vector<std::future<void>> tasks;
 
             std::ofstream writer;
-            writer.open("../../../HSDB-BMEX_XBTUSD666_100kus.txt");
 
             feed bitmex(key, secret, on);
             std::cout << "Started: " << bitmex.trader.auth.nonce() << std::endl;
@@ -39,7 +38,6 @@ int main()
             }
             std::cout << "Restarting: " << bitmex.trader.auth.nonce() << std::endl;
             //writer << "RESTARTING: " << bitmex.trader.auth.nonce() << "\n";
-            writer.close();
             tasks.clear();
             sleep(15);
         } catch (...) {std::cout << "Restarting @ Main" << "\n";}

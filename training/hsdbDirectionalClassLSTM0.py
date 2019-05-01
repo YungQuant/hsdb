@@ -36,7 +36,7 @@ def writeDirectionalDataset(X, Y, path="../..HSDB_unnamedDataset.txt"):
 
             strY = str(Y[i])
 
-            fileP.write(strX + "\n")
+            fileP.write(strX[:-1] + "\n")
             fileP.write(strY + "\n")
 
         except Exception as e:
@@ -192,7 +192,10 @@ def forza(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, scale=10000, volOn
                 for k in range(depth):
                     datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k])/scale)
 
-                data.append(datum)
+                if volOnly == False and datum[0] > 1000  and datum[0] < 500000 and (datum[depth-1] < datum[depth*3-1]):
+                    data.append(datum)
+                else:
+                    i-=3
                 datum = []
 
             i+=4
@@ -412,13 +415,13 @@ def plot(y):
 
 timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")
 currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
-Dfiles = ["XBTUSD02", "BMEX_XBTUSD2_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD3_10kus", 
+Dfiles = ["XBTUSD02", "BMEX_XBTUSD2_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD3_10kus", "BMEX_XBTUSD667_100kus", 
 "HSDBdirectionalLSTM0-Din20-dist3-lookback30-perc0.99-sparcity10-datasetBMEX_XBTUSD2_100kus-time2019-04-20T02:40:32.644265UTC__2019-04-20T02:45:14.197736UTC.txt", 
 "HSDBdirectionalClassLSTM0-MidPeak-Din20-dist10-lookback20-perc0.99-sparcity10-scale100000-vOTrue-datasetBMEX_XBTUSD3_100kus.txt",
  "BMEX_XBTUSD5_10kus"]
-path = Dfiles[-1]
+path = Dfiles[4]
 errs, Ps, aPs, aTestYs, aTrainYs, passes, fails = [], [], [], [], [], 0, 0
-Din = 20; dist = 10; perc = 0.99; c = 1.5; b = 32; nb_epoch = 50; l = 20; opt = "Adadelta"; s = 10; scale = 100000; vO = True
+Din = 10; dist = 10; perc = 0.95; c = 1.5; b = 32; nb_epoch = 50; l = 20; opt = "Adadelta"; s = 10; scale = 100000000; vO = True
 if vO == True:
     dims = Din*2*l
 else:
@@ -473,7 +476,7 @@ model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX
                                           use_multiprocessing=False,
                                           workers=8,
                                           max_queue_size=2,
-                                          callbacks=[stop, lrs])
+                                          callbacks=[stop])
 # model.fit(trainX, trainY, nb_epoch=nb_epoch, batch_size=5, verbose=2, callbacks=[reduce_lr, saver])
 # TO-DO 50%: write formatted datasets to file, read from files on training to save reformatting time
 # FOR UNIDIMENTIONAL PREDICTIONS VVV
@@ -512,4 +515,4 @@ print("\nPs Describe:", sp.describe(aPs), "Ps Median:", list(sorted(aPs))[int(np
 print("\n\n SAVE MODEL?")
 resp = input()
 if resp in ["y", "yes", "Y", "YES", "save", "SAVE"]:
-    model.save(f'../models/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_{timeStr}.h5')
+    model.save(f'../models/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-_{timeStr}.h5')
