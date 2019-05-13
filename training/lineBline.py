@@ -1,4 +1,5 @@
 import os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -41,10 +42,10 @@ def forza(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, scale=10000, volOn
                 for k in range(depth):
                     datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k])/scale)
 
-                if volOnly == False and datum[0] > 1000 and (datum[depth-1] < datum[depth*3-1]):
+                if volOnly == False and datum[0] > 1000  and datum[0] < 500000 and (datum[depth-1] < datum[depth*3-1]):
                     data.append(datum)
                 else:
-                    i+=1
+                    i-=3
                 datum = []
 
             i+=4
@@ -113,6 +114,45 @@ def create_forzaSequentialDirection_dataset(dataset, distance=1, depth=30, lookb
 
     return np.array(dataX), np.array(dataY)
 
+def create_forzaSequentialLinear_dataset(dataset, distance=1, depth=30, lookback=100, vO=False):
+    dataX, dataY = [], []
+    dims = depth*2
+
+    for i in range(lookback, len(dataset)-distance):
+        datum1 = []
+        for k in dataset[i-lookback:i]:
+            if vO == False:
+                for j in k:
+                    datum1.append(j)
+            else:
+                for j in k[depth:depth*2]:
+                    datum1.append(j)
+                for jk in k[depth*3:depth*4]:
+                    datum1.append(jk)
+        try:
+            dataX.append(datum1)
+            # dataX.append([j for j in k for k in dataset[i-lookback:i]])
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][dims]]))
+        except:
+            print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
+            print("dataset[i+distance]: ", dataset[i+distance])
+            # print(dataset[i+distance], "\n", dataset[i])
+            print(dataset[i+distance][dims], dataset[i+distance][0], dataset[i][dims], dataset[i][0])
+
+    return np.array(dataX), np.array(dataY)
+
+def cosl(e):
+    if e <= 10:
+        return (math.tanh(((math.cos(e+1) * 3.14)+2)/10)/(math.log(e+1)+1))+ 0.0000001
+    elif e <= 20:
+        return (math.tanh(((math.cos(e+1) * 3.14)+2)/10)/(math.log(e+1)+1)) * 2 + 0.0000001
+    elif e <= 30:
+        return (math.tanh(((math.cos(e+1) * 3.14)+2)/10)/(math.log(e+1)+1)) * 3 + 0.0000001
+    elif e <= 50:
+        return (math.tanh(((math.cos(e+1) * 3.14)+2)/10)/(math.log(e+1)+1)) * 4 + 0.0000001
+    elif e <= 80:
+        return (math.tanh(((math.cos(e+1) * 3.14)+2)/10)/(math.log(e+1)+1)) * 5 + 0.0000001
+
 def plot(a):
     y = np.arange(len(a))
     plt.plot(y, a, 'g')
@@ -138,15 +178,22 @@ def plot3(a, b, c):
     plt.show()
 
 
-Dfiles = ["XBTUSD02", "BMEX_XBTUSD666_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD3_10kus", "BMEX_XBTUSD5_10kus"]
-X = []
-path = Dfiles[1]
-x, Y = create_forzaSequentialDirection_dataset(forza(currency=path, depth=10, p=1, s=10, scale=100000000, volOnly=False), distance=10, depth=10, lookback=1, vO=True)
+Dfiles = ["BMEX_XBTUSDt_100kus", "BMEX_XBTUSDT_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD3_10kus", "BMEX_XBTUSD667_100kus", "BMEX_XBTUSD666_100kus"]
+X, Y = [], []
+path = Dfiles[0]; attention = 1000
+# x, y = create_forzaSequentialDirection_dataset(forza(currency=path, depth=10, p=1, s=10, scale=10000000, volOnly=False), distance=10, depth=10, lookback=1, vO=True)
 
-for k in x:
-    X.append(sum(k))
+# for k in range(attention, len(x)):
+#     X.append(sum(x[k]))
+# for i in range(attention, len(y)):
+#     Y.append(np.std(y[i-attention:i]))
 
-plot2(X, Y)
+for k in range(200):
+    X.append(cosl(k))
+
+plot(X)
+# plot2(X, Y)
+
 
 
 # path = "../../datasets/HSDBdirectionalLSTM0-Din10-dist3-lookback90-perc0.99-sparcity10-datasetBMEX_XBTUSD3_100kus.txt"

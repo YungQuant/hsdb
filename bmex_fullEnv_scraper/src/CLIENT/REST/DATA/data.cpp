@@ -31,7 +31,10 @@ boost::property_tree::ptree data::json(std::string msg){
 
 int data::prep_book(std::ofstream & writer, std::string symbol)
 {   
-    writer.open("../../../HSDB-BMEX_XBTUSD667_1mus.txt", std::ofstream::app);
+    writer.open("../../../669/HSDB-BMEX_" + symbol + "_1mus.txt", std::ofstream::app);
+    if (!writer.is_open())
+        std::cout << "CHECK FILE DESTINATION!\n";
+
     std::string prices = "", volumes = "";
     for(auto kv : bids[symbol]){
         prices += bids[symbol][kv.first][0] + ",";

@@ -290,88 +290,29 @@ def create_forzaSequentialClassDirection_dataset(dataset, distance=1, depth=30, 
 
     return np.array(dataX), np.array(dataY)
 
-def create_forzaSparseSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100, sparcity=10):
-    dataX, dataY = [], []
-    for i in range(lookback, len(dataset)-distance):
-        if i % sparcity == 0:
-            datum1 = []
-            for k in dataset[i-lookback:i]:
-                for j in k:
-                    datum1.append(j)
-            try:
-                dataX.append(datum1)
-                # dataX.append([j for j in k for k in dataset[i-lookback:i]])
-                dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
-            except:
-                print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
-                print("dataset[i+distance]: ", dataset[i+distance])
-                # print(dataset[i+distance], "\n", dataset[i])
-                print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
-
-    return np.array(dataX), np.array(dataY)
-
-def create_forzaNerfedSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100):
-    dataX, dataY = [], []
-    for i in range(lookback, len(dataset)-distance):
-        if np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]) != 0:
-            datum1 = []
-            for k in dataset[i-lookback:i]:
-                for j in k:
-                    datum1.append(j)
-            try:
-                dataX.append(datum1)
-                dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
-            except:
-                print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
-                print("dataset[i+distance]: ", dataset[i+distance])
-                # print(dataset[i+distance], "\n", dataset[i])
-                print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
-
-    return np.array(dataX), np.array(dataY)
-
-def create_forzaPartiallyNerfedSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100):
-    dataX, dataY = [], []
-    for i in range(lookback, len(dataset)-distance):
-        if dataset[i] != dataset[i-1]:
-            datum1 = []
-            for k in dataset[i-lookback:i]:
-                for j in k:
-                    datum1.append(j)
-            try:
-                dataX.append(datum1)
-                dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
-            except:
-                print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
-                print("dataset[i+distance]: ", dataset[i+distance])
-                # print(dataset[i+distance], "\n", dataset[i])
-                print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
-
-    return np.array(dataX), np.array(dataY)
-
-def create_forzaCondensedSequentialDirection_dataset(dataset, distance=1, depth=30, lookback=100):
-    dataX, dataY = [], []
-    for i in range(lookback, len(dataset)-distance):
-        datum1 = []
-        for k in dataset[i-lookback:i]:
-            for j in k:
-                datum1.append(j)
-        try:
-            dataX.append(datum1)
-            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth*2]]) - np.mean([dataset[i][0], dataset[i][depth*2]]))
-        except:
-            print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
-            print("dataset[i+distance]: ", dataset[i+distance])
-            # print(dataset[i+distance], "\n", dataset[i])
-            print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
-
-    return np.array(dataX), np.array(dataY)
-
 def create_forzaFortuneTeller_dataset(dataset):
     dataX, dataY = [], []
     for i in range(len(dataset)-1):
         dataX.append(dataset[i])
         dataY.append([dataset[i+1][0], dataset[i+1][1], dataset[i+1][2], dataset[i+1][3], dataset[i+1][60], dataset[i+1][61], dataset[i+1][62], dataset[i+1][63]])
     return np.array(dataX), np.array(dataY)
+    
+def volatilityAdaptiveClassFilter(X, Y, attention=1000):
+    x, y = [], []
+    for i in range(attention, len(Y)):
+        for k in Y[i-attention:i]:
+            max = max(k)
+            maxIx = list(k).index(max)
+            min = min(k)
+            minIx = list(k).index(min)
+            if maxIx == 2 or minIx == 0:
+                x.append(X[i])
+                y.append(Y[i])
+                break
+    return np.array(x), np.array(y)
+
+# maxP = max(pY)
+# maxPIx = list(pY).index(maxP)
 
 def cosl(e):
     if e <= 10:
@@ -421,7 +362,7 @@ Dfiles = ["XBTUSD02", "BMEX_XBTUSD2_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD
  "BMEX_XBTUSD5_10kus"]
 path = Dfiles[4]
 errs, Ps, aPs, aTestYs, aTrainYs, passes, fails = [], [], [], [], [], 0, 0
-Din = 10; dist = 10; perc = 0.95; c = 1.5; b = 32; nb_epoch = 50; l = 20; opt = "Adadelta"; s = 10; scale = 100000000; vO = True
+Din = 10; dist = 10; perc = 0.95; c = 1.5; b = 32; nb_epoch = 50; l = 20; opt = "Adadelta"; s = 10; scale = 10000000; vO = True
 if vO == True:
     dims = Din*2*l
 else:

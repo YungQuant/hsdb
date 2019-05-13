@@ -164,9 +164,15 @@ def volumeAdaptiveStackingFilter(X, depth, pF=True):
 
     return x
 
-def forza(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, scale=10000, volOnly=False, vFilter="adaptive", g=0, pF=True):
+def forza(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, scale=10000, volOnly=False, vFilter="adaptive", g=0, pF=True, header=""):
     # path = f'../../HSDB_{currency}.txt'
-    path = f'../../HSDB-{currency}.txt'; oL = 0; fL = 0
+    if header == "":
+        path = f'../../HSDB-{currency}.txt'; oL = 0; fL = 0
+    else:
+        path = f'../../{header}/HSDB-BMEX_{currency}.txt'; oL = 0; fL = 0
+
+    vMin = 500; vMax = 50000
+
     # /home/yungquant/HSDB-BMEX_XBTUSD2_100kus.txt
     data, datum = [], []
     if os.path.isfile(path) == False:
@@ -203,7 +209,8 @@ def forza(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, scale=10000, volOn
                 for k in range(depth):
                     datum.append(float(list(reversed(lines[i+3].split(",")))[:depth][k])/scale)
 
-                if volOnly == False and datum[0] > 1000  and datum[0] < 500000 and (datum[depth-1] < datum[depth*3-1]):
+                # if volOnly == False and datum[0] > vMin and datum[0] < vMax and (datum[depth-1] < datum[depth*3-1]):
+                if datum[:depth] == sorted(datum[:depth]):
                     if vFilter == "none":
                         data.append(datum)
                     elif vFilter == "adaptive":
@@ -222,7 +229,55 @@ def forza(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, scale=10000, volOn
             i+=4
             k+=1
         print(f'{vFilter} filtering compressed {oL} layers to {nL} layers; {((oL-nL)/oL)*100}%')
-        print(f'\nForza returning {len(data)} epochs...\n data[-1]: {data[-1]}')
+        print(f'\nForza returning {len(data)} epochs from {currency}...\n data[-1]: {data[-1]}')
+
+    return data
+
+def forzaLinear(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, header=""):
+    # path = f'../../HSDB_{currency}.txt'
+    if header == "":
+        path = f'../../HSDB-{currency}.txt'; oL = 0; fL = 0
+    else:
+        path = f'../../{header}/HSDB-BMEX_{currency}.txt'; oL = 0; fL = 0
+    # /home/yungquant/HSDB-BMEX_XBTUSD2_100kus.txt
+    data, datum = [], []
+    if os.path.isfile(path) == False:
+        print(f'\ncould not source {path} data\n')
+    else:
+        fileP = open(path, "r")
+        lines = fileP.readlines()
+        lines = lines[:int(np.floor(p * len(lines)))]
+
+        i, k , oL, nL = 0, 0, 0, 0
+        while i < len(lines)-3:
+            # bidP = lines[i].split(",")[:depth]
+            # bidV = lines[i+1].split(",")[:depth]
+            # askP = list(reversed(lines[i+2].split(",")))[:depth]
+            # askV = list(reversed(lines[i+3].split(",")))[:depth]
+
+            # for k in range(depth):
+            #     datum.append(float(bidP[k]))
+            # for k in range(depth):
+            #     datum.append(float(bidV[k]))
+            # for k in range(depth):
+            #     datum.append(float(askP[k]))
+            # for k in range(depth):
+            #     datum.append(float(askV[k]))
+            if k % s == 0:
+                for k in range(depth):
+                    datum.append(float(list(reversed(lines[i].split(",")[:depth]))[k]))
+                for k in range(depth):
+                    datum.append(float(list(reversed(lines[i+2].split(",")))[:depth][k]))
+
+                if datum == sorted(datum):
+                    data.append(datum)
+                else:
+                    i-=3
+                datum = []
+
+            i+=4
+            k+=1
+        print(f'\nForzaLinear returning {len(data)} epochs from {currency}...\n data[-1]: {data[-1]}')
 
     return data
 
@@ -272,6 +327,27 @@ def create_forzaSequentialClassDirection_dataset(dataset, distance=1, depth=30, 
             print(dataset[i+distance][depth*2], dataset[i+distance][0], dataset[i][depth*2], dataset[i][0])
 
     return np.array(dataX), np.array(dataY)
+
+def create_forzaSequentialLinearDirection_dataset(dataset, distance=1, depth=30, lookback=100):
+    dataX, dataY = [], []
+
+    for i in range(lookback, len(dataset)-distance):
+        datum1 = []
+        for k in dataset[i-lookback:i]:
+            datum1.append(np.mean([k[0], k[depth]]))
+        try:
+            dataX.append(datum1)
+            # dataX.append([j for j in k for k in dataset[i-lookback:i]])
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][depth]]) - np.mean([dataset[i][0], dataset[i][depth]]))
+        except:
+            print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
+            print("dataset[i+distance]: ", dataset[i+distance])
+            # print(dataset[i+distance], "\n", dataset[i])
+            print(dataset[i+distance][depth], dataset[i+distance][0], dataset[i][depth], dataset[i][0])
+
+    x, y = np.array(dataX), np.array(dataY)
+    print(f'\ncreate_forzaSequentialLinearDirection_dataset returning x:{x.shape} y: {y.shape}...\n')
+    return x, y
 
 def create_forzaSequentialDirection_dataset(dataset, distance=1, depth=30, newD=10, lookback=100, vO=False, pF=True):
     dataX, dataY = [], []
@@ -361,37 +437,68 @@ class hsdbSequence(Sequence):
 
         return np.array(batch_x), np.array(batch_y)
 
+def getEnv(header, suffix, currencies, Din, perc, s, scale, vFilter, g, pF, dist, l, vO, attention, interest):
+    envSet = {}
+    for currency in currencies:
+        path = currency + suffix
+        envSet[currency] = {"X": [], "Y": []}
 
-# TO-DO 50%: write formatted datasets to file, read from files on training to save reformatting time
-# TO-DO 100%: train in chunks to avoid overloading 8 GB GPU RAM (safe @ {Din = 30; dist = 100; perc = 0.2; c = 2} on 20 GB file)
-# TO_DO 100%: mkdir models && mkdir models/models && mkdir models/training && FORMAT THE FUCKING FILEPATHS :(
+        # x = forza(path, Din, perc, s, scale, False, vFilter, g, pF, header)
+        # if pF == False:
+        #     x, y = create_forzaSequentialDirection_dataset(x, dist, Din, int((len(x[0])-Din*2)/2), l, vO, pF)
+        # elif pF == True:
+        #     x, y = create_forzaSequentialDirection_dataset(x, dist, Din, int(len(x[0])/4), l, vO, pF)
+        # X, Y = volatilityAdaptiveFilter(x, y, attention, interest)
+
+        x = forzaLinear(path, Din, perc, s, header)
+        X, Y = create_forzaSequentialLinearDirection_dataset(x, dist, Din, l)
+        # X, Y = volatilityAdaptiveFilter(x, y, attention, interest)
+
+        envSet[currency]["X"] = X
+        envSet[currency]["Y"] = Y
+
+    return envSet
+
+
+def getTarget(envSet, target):
+    X, Y = [], []
+    keys = list(envSet.keys())
+    
+    for i in range(len(envSet[keys[0]]["X"])-2):
+        datum = []
+        for k in keys:
+            for j in envSet[k]["X"][i]:
+                datum.append(j)
+        X.append(datum)
+        Y.append(envSet[target]["Y"][i])
+    
+    return X, Y
+
+
+
 # TO-DO: train inline on file stream
 # TO-DO: paralellize or c-ify preprocessing
 # TO-DO: tensorboard (callback)
-# TO-DO: tanh (or other formulaic/algorithmic) volume scaling
 
 # path = input("Enter data path:")
 
 timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")
-currency_pairs, currencies = ["XBTUSD", "ETHUSD", "XRPU18", "LTCU18", "BCHU18"], ["BTCUSD", "ADABTC", "ETHUSD", "LTCBTC", "XRPBTC"]
-Dfiles = ["BMEX_XBTUSDt_100kus", "BMEX_XBTUSDT_100kus", "BMEX_XBTUSD3_100kus", "BMEX_XBTUSD3_10kus", "BMEX_XBTUSD667_100kus", "BMEX_XBTUSD666_100kus", "BMEX_XBTUSD666_1mus"]
-Dsets =["HSDBdirectionalLSTM0-MidPeak-VolAdaptive-Din20-dist10-lookback30-perc0.99-sparcity10-scale10000000-vOTrue-pFTrue-attention-60-interest0.3-vFilteradaptive-grouping1-datasetBMEX_XBTUSD3_100kus.txt", "HSDBdirectionalLSTM0-MidPeak-VolAdaptive-Din20-dist10-lookback30-perc0.99-sparcity10-scale10000000-vOTrue-pFTrue-attention-60-interest0.3-vFilteradaptive-grouping1-datasetBMEX_XBTUSD666_100kus.txt"]
-path = Dfiles[-1]
+header = "668"; suffix = "_1mus"
+currencies = ["XBTUSD", "ADAM19", "BCHM19", "EOSM19", "ETHUSD", "LTCM19", "TRXM19", "XRPM19"]
+Dsets = ["HSDBENVdirectionalLSTM0-MidPeak-Linear-Din2-dist10-lookback60-perc0.99-sparcity1-attention-60-interest0.3-header668c-targetXBTUSD.txt"]
+target = currencies[0]
 errs, Ps, passes, fails = [], [], 0, 0
-Din = 100; dist = 10; perc = 0.99; c = 1.5; b = 32; nb_epoch = 50; l = 30; opt = "Adamax"; kInit = "glorotUniform"; bInit = "zeros"; s = 1; scale = 10000000; vO = True
+Din = 2; dist = 10; perc = 0.99; c = 1.5; b = 32; nb_epoch = 50; l = 30; opt = "Adamax"; kInit = "glorotUniform"; bInit = "zeros"; s = 1; scale = 10000000; vO = True
 attention = 60; interest = 0.3; vFilter = "adaptive"; g = (10 if vFilter == "grouping" else 1); pF = True
 
-x = forza(path, Din, perc, s, scale, False, vFilter, g, pF)
-if pF == False:
-    x, y = create_forzaSequentialDirection_dataset(x, dist, Din, int((len(x[0])-Din*2)/2), l, vO, pF)
-elif pF == True:
-    x, y = create_forzaSequentialDirection_dataset(x, dist, Din, int(len(x[0])/4), l, vO, pF)
+x = getEnv(header, suffix, currencies, Din, perc, s, scale, vFilter, g, pF, dist, l, vO, attention, interest)
+x, y = getTarget(x, target)
 X, Y = volatilityAdaptiveFilter(x, y, attention, interest)
 
-# X, Y = readDataset(path)
+# X, Y = readDataset(Dsets[0])
 # plot(Y)
-# writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-MidPeak-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-scale{scale}-vO{vO}-dataset{path}')
-writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-MidPeak-VolAdaptive-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-scale{scale}-vO{vO}-pF{pF}-attention-{attention}-interest{interest}-vFilter{vFilter}-grouping{g}-dataset{path}')
+writeDirectionalDataset(X, Y, f'../../datasets/HSDBENVdirectionalLSTM0-MidPeak-Linear-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-attention-{attention}-interest{interest}-header{header}-target{target}')
+# writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-MidPeak-VolAdaptive-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-scale{scale}-vO{vO}-pF{pF}-attention-{attention}-interest{interest}-vFilter{vFilter}-grouping{g}-dataset{path}')
 # print("X0: ", X[0], " Y0 ", Y[0])
 print("\nmean/min/max(Y):", np.mean(Y), min(Y), max(Y), "\n")
 #print("\nshape(X):", X.shape)
@@ -416,31 +523,33 @@ stop = EarlyStopping(patience=10)
 # saver = keras.callbacks.ModelCheckpoint(f'../models/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_time{timeStr}.h5',
 #                                         monitor='val_acc', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 logF = f'../logs/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_time{timeStr}.txt'
-# opt = keras.optimizers.Adam(lr=0.666, epsilon=0.00000001, decay=0.00000001, amsgrad=False)
-# opt = keras.optimizers.SGD(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)
-# keras.optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
-# keras.optimizers.Adagrad(lr=0.01, epsilon=None, decay=0.0)
-# keras.optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
-opt = keras.optimizers.Adamax(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0)
+# opt = keras.optimizers.Adam(lr=0.00000666, epsilon=0.00000001, decay=0.001, amsgrad=True)
+# opt = keras.optimizers.SGD(lr=0.001, momentum=0.0, decay=0.0, nesterov=False)
+# opt = keras.optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
+opt = keras.optimizers.Adagrad(lr=0.00000  1, epsilon=None, decay=0.666)
+# opt = keras.optimizers.Adadelta(lr=0.001, rho=0.95, epsilon=None, decay=0.0)
+# opt = keras.optimizers.Adamax(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0)
 # keras.optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
 
 K.tensorflow_backend._get_available_gpus()
 model = Sequential()
 model.add(Dense(dims*4, input_shape=(1, dims)))
 # model.add(Dense(dims, input_shape=(1, dims), kernel_initializer=kInit, bias_initializer=bInit))  #CHANGE MODEL SAVE FILE NAME IF CUSTOM INIT
-model.add(LeakyReLU(alpha=0.111))
+model.add(LeakyReLU(alpha=0.1))
 # model.add(Dropout(0.2))
 model.add(Dense(dims*4))
-model.add(LeakyReLU(alpha=0.222))
+model.add(LeakyReLU(alpha=0.2))
+# model.add(Dropout(0.3))
 model.add(LSTM(dims*4, return_sequences=True))
-model.add(LeakyReLU(alpha=0.333))
+model.add(LeakyReLU(alpha=0.2))
+# model.add(Dropout(0.3))
 model.add(LSTM(dims, return_sequences=False))
-model.add(LeakyReLU(alpha=0.222))
+model.add(LeakyReLU(alpha=0.2))
 model.add(Dense(int(np.floor(dims/4))))
-model.add(LeakyReLU(alpha=0.111))
+model.add(LeakyReLU(alpha=0.1))
 # model.add(Flatten())
 model.add(Dense(1, activation='linear'))
-model.compile(loss="mse", optimizer=opt, metrics=['accuracy'])
+model.compile(loss="mean_absolute_percentage_error", optimizer=opt, metrics=['accuracy'])
 model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX) / b),
                                           epochs=nb_epoch,
                                           verbose=2,
@@ -471,8 +580,8 @@ print("\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes /
     "Mean Perc. Error:", np.mean(errs))
 
 print("\nPs Describe:", sp.describe(Ps), "Ps Median:", list(sorted(Ps))[int(np.floor(len(Ps)/2))], "\nY Describe:", sp.describe(Y), "Ys Median:", list(sorted(Y))[int(np.floor(len(Y)/2))],"\ntrainY Describe:", sp.describe(trainY), "\ntestY Describe:", sp.describe(testY))
-print(f'\nhsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
+print(f'\nhsdbENVDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
 print("\n\n SAVE MODEL?")
 resp = input()
 if resp in ["y", "yes", "Y", "YES", "save", "SAVE"]:
-    model.save(f'../models/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
+    model.save(f'../models/hsdbENVDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
