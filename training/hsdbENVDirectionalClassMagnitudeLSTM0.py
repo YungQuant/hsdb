@@ -72,6 +72,34 @@ def writeDirectionalDataset(X, Y, path="../..HSDB_unnamedDataset.txt"):
 
     fileP.close()
 
+def writeDirectionalClassDataset(X, Y, path="../..HSDB_unnamedDataset.txt"):
+    path = path + ".txt"
+
+    if os.path.isfile(path) == True:
+        print(f'Found {path}, not reproducing')
+        return
+
+    fileP = open(path, "w")
+
+    for i in range(len(X)):
+        try:
+            strX, strY = "", ""
+            for k in range(len(X[i])):
+                strX += str(X[i][k])
+                strX += ","
+
+            for j in range(len(Y[i])):
+                strY += str(Y[i][j])
+                strY += ","
+
+            fileP.write(strX[:-1] + "\n")
+            fileP.write(strY[:-1] + "\n")
+
+        except Exception as e:
+            print(e)
+
+    fileP.close()
+
 def readDataset(path="../..HSDB_unnamedDataset.txt"):
     path = "../../datasets/" + path
     if os.path.isfile(path) == False:
@@ -88,6 +116,39 @@ def readDataset(path="../..HSDB_unnamedDataset.txt"):
 
         X.append([float(l) for l in linex[:]])
         Y.append([float(l) for l in liney[:]])
+
+        i += 2
+
+    return np.array(X), np.array(Y)
+
+def readDirectionalClassDataset(path="../..HSDB_unnamedDataset.txt", old=False):
+    path = "../../datasets/" + path
+    if os.path.isfile(path) == False:
+        print(f'{path}, not found')
+    fileP = open(path, "r")
+    lines = fileP.readlines()
+
+    X, Y = [], []
+
+    i = 0
+    while i < len(lines)-1:
+        if old == True:
+            linex = lines[i].split(",")
+            # [0 1 0]
+            liney = str(lines[i+1])
+
+            # print(f'linex: {linex} \n')
+            # print(f'liney: {liney} \n')
+            # [print(f'{t}' for t in liney)]
+
+            X.append([float(l) for l in linex[:-1]])
+            Y.append([float(liney[1]), float(liney[3]), float(liney[5])])
+        else:
+            linex = lines[i].split(",")
+            liney = lines[i+1].split(",")
+
+            X.append([float(l) for l in linex])
+            Y.append([float(l) for l in liney])
 
         i += 2
 
@@ -397,7 +458,7 @@ def create_forzaSequentialDirection_dataset(dataset, distance=1, depth=30, newD=
         try:
             dataX.append(datum1)
             # dataX.append([j for j in k for k in dataset[i-lookback:i]])
-            dataY.append((np.mean([dataset[i+distance][0], dataset[i+distance][depth]]) - np.mean([dataset[i][0], dataset[i][depth]]))/np.mean([dataset[i][0], dataset[i][depth]]))
+            dataY.append(np.mean([dataset[i+distance][0], dataset[i+distance][dims]]) - np.mean([dataset[i][0], dataset[i][dims]]))
         except:
             print("create_forzaSequentialDirection_dataset FAILED dataset[i]:", dataset[i])
             print("dataset[i+distance]: ", dataset[i+distance])
@@ -428,17 +489,13 @@ def create_forzaSequentialClassDirectionMagnitude_dataset(dataset, distance=1, d
         try:
             dataX.append(datum1)
             # dataX.append([j for j in k for k in dataset[i-lookback:i]])
-            yPrime = np.mean([dataset[i+distance][0], dataset[i+distance][dims]]) - np.mean([dataset[i][0], dataset[i][dims]]) / 100
+            yPrime = (np.mean([dataset[i+distance][0], dataset[i+distance][depth]]) - np.mean([dataset[i][0], dataset[i][depth]]))/np.mean([dataset[i][0], dataset[i][depth]])/2
             if yPrime > 0:
                 yPrime += 0.5
-                if yPrime > 1: 
-                    yPrime = 1
                 dataY.append([1-yPrime, yPrime])
             elif yPrime <= 0:
                 yPrime = abs(yPrime)
                 yPrime += 0.5
-                if yPrime > 1: 
-                    yPrime = 1
                 dataY.append([yPrime, 1-yPrime])
         except:
             print("create_forzaSequentialClassDirectionMagnitude_dataset FAILED dataset[i]:", dataset[i])
@@ -460,6 +517,18 @@ def volatilityAdaptiveFilter(X, Y, attention=1000, interest=0.5):
                 y.append(Y[i])
                 break
     print(f'\nvolatilityAdaptiveFilter compressed {len(Y)} epochs to {len(y)} epochs; {((len(Y)-len(y))/len(Y))*100}%\n')
+    return np.array(x), np.array(y)
+
+def volatilityAdaptiveClassFilter(X, Y, attention=1000, interest=0.5):
+    x, y = [], []
+    for i in range(attention, len(Y)):
+        for k in Y[i-attention:i]:
+            # print(f'i:{i} , k:{k} \n Y[{i-attention}:{i}]: {Y[i-attention:i]}')
+            if k[0] >= interest or k[0] <= 1-interest:
+                x.append(X[i])
+                y.append(Y[i])
+                break
+    print(f'\nvolatilityAdaptiveClassFilter compressed {len(Y)} epochs to {len(y)} epochs; {((len(Y)-len(y))/len(Y))*100}%\n')
     return np.array(x), np.array(y)
 
 def volatilitySTDAdaptiveFilter(X, Y, attention=1000, interest=0.5):
@@ -522,7 +591,7 @@ def getEnv(header, suffix, currencies, Din, perc, s, scale, vFilter, g, pF, dist
 
         # V PRICE V
         x = forzaLinear(path, Din, perc, s, header)
-        X, Y = create_forzaSequentialLinearDirection_dataset(x, dist, Din, l)
+        X, Y = create_forzaSequentialLinearClassDirectionMagnitude_dataset(x, dist, Din, l)
 
         envSet[currency]["X"] = X
         envSet[currency]["Y"] = Y
@@ -553,29 +622,29 @@ def getTarget(envSet, target):
 # path = input("Enter data path:")
 
 timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")
-header = "668"; suffix = "_1mus"
+header = "669c"; suffix = "_1mus"
 currencies = ["XBTUSD", "ADAM19", "BCHM19", "EOSM19", "ETHUSD", "LTCM19", "TRXM19", "XRPM19"]
 Dsets = ["HSDBENVdirectionalLSTM0-MidPeak-Linear-Din2-dist10-lookback60-perc0.99-sparcity1-attention-60-interest0.3-header668c-targetXBTUSD.txt",
-"HSDBENVdirectionalLSTM0-MidPeak-LinearPerc-Din2-dist10-lookback120-perc0.99-sparcity1-attention-60-interest0.001-header669c-targetADAM19.txt"]
-target = currencies[1]
-errs, Ps, passes, fails = [], [], 0, 0
-Din = 2; dist = 10; perc = 0.99; c = 1.5; b = 32; nb_epoch = 50; l = 120; opt = "Adamax"; s = 1; scale = 10000000; vO = True
-attention = 60; interest = 0.001; vFilter = "adaptive"; g = (10 if vFilter == "grouping" else 1); pF = True
+"HSDBENVdirectionalClassMagnitudeLSTM0-MidPeak-Linear-Din1-dist1-lookback3-perc0.99-sparcity10-attention-60-interest0.51-header669c-targetXBTUSD.txt"]
+target = currencies[0]
+errs, Ps, aPs, aTestYs, aTrainYs, passes, fails = [], [], [], [], [], 0, 0
+Din = 2; dist = 1; perc = 0.99; c = 1.5; b = 32; nb_epoch = 50; l = 3; opt = "Adadelta"; kInit = "glorotUniform"; bInit = "zeros"; s = 10; scale = 10000000; vO = True
+attention = 60; interest = 0.5001; vFilter = "adaptive"; g = (10 if vFilter == "grouping" else 1); pF = True
 
 x = getEnv(header, suffix, currencies, Din, perc, s, scale, vFilter, g, pF, dist, l, vO)
 x, y = getTarget(x, target)
-X, Y = volatilityAdaptiveFilter(x, y, attention, interest)
+X, Y = volatilityAdaptiveClassFilter(x, y, attention, interest)
 
-# X, Y = readDataset(Dsets[1])
-plot(Y)
-writeDirectionalDataset(X, Y, f'../../datasets/HSDBENVdirectionalLSTM0-MidPeak-LinearPerc-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-attention-{attention}-interest{interest}-header{header}-target{target}')
-# writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-MidPeak-VolAdaptivePerc-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-scale{scale}-vO{vO}-pF{pF}-attention-{attention}-interest{interest}-vFilter{vFilter}-grouping{g}-dataset{path}')
-# print("X0: ", X[0], " Y0 ", Y[0])
-print("\nmean/min/max(Y):", np.mean(Y), min(Y), max(Y), "\n")
+# X, Y = readDirectionalClassDataset(Dsets[1])
+plot([g[0] for g in Y])
+writeDirectionalClassDataset(X, Y, f'../../datasets/HSDBENVdirectionalClassMagnitudeLSTM0-MidPeak-Linear-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-attention-{attention}-interest{interest}-header{header}-target{target}')
+# writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-MidPeak-VolAdaptive-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-scale{scale}-vO{vO}-pF{pF}-attention-{attention}-interest{interest}-vFilter{vFilter}-grouping{g}-dataset{path}')
+print("X0: ", X[0], " Y0 ", Y[0])
+print("\nmean/min/max(Y):", (np.mean(Y[:][0]) + np.mean(y[:][1]))/2, min(Y[:][0]), max(Y[:][1]), "\n")
 #print("\nshape(X):", X.shape)
 
 trainX, trainY, testX, testY = X[:int(np.floor(len(X)/c))], Y[:int(np.floor(len(X)/c))], X[int(np.floor(len(X)/c)):], Y[int(np.floor(len(X)/c)):]
-print(testX[0], testY[0])
+# print(testX[0], testY[0])
 
 # scaler = MinMaxScaler(feature_range=(-10, 10))
 # trainX = scaler.fit_transform(trainX)
@@ -588,8 +657,6 @@ print("trainX shape", trainX.shape, "testX shape", testX.shape, "\n")
 dims = trainX.shape[2]
 print(f'Set DIMS: {dims}\n')
 
-kInit = keras.initializers.RandomUniform(minval=-0.05, maxval=0.05, seed=None)
-bInit = keras.initializers.Ones()
 # lrs = LearningRateScheduler(cosl)
 stop = EarlyStopping(patience=10)
 # reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.95, patience=10, min_lr=0.0000000001)
@@ -598,31 +665,31 @@ stop = EarlyStopping(patience=10)
 logF = f'../logs/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_time{timeStr}.txt'
 # opt = keras.optimizers.Adam(lr=0.00000666, epsilon=0.00000001, decay=0.001, amsgrad=True)
 # opt = keras.optimizers.SGD(lr=0.001, momentum=0.0, decay=0.0, nesterov=False)
-opt = keras.optimizers.RMSprop(lr=0.1, rho=0.99, epsilon=None, decay=0.0)
+# opt = keras.optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
 # opt = keras.optimizers.Adagrad(lr=0.000001, epsilon=None, decay=0.666)
-# opt = keras.optimizers.Adadelta(lr=0.00000001, rho=0.95, epsilon=None, decay=0.0)
+opt = keras.optimizers.Adadelta(lr=0.000001, rho=0.95, epsilon=None, decay=0.0)
 # opt = keras.optimizers.Adamax(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0)
 # keras.optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
 
 K.tensorflow_backend._get_available_gpus()
 model = Sequential()
-# model.add(Dense(dims, input_shape=(1, dims)))
-model.add(Dense(dims, input_shape=(1, dims), kernel_initializer=kInit, bias_initializer=bInit))  #CHANGE MODEL SAVE FILE NAME IF CUSTOM INIT
-model.add(LeakyReLU(alpha=0.111))
+model.add(Dense(dims*4, input_shape=(1, dims)))
+# model.add(Dense(dims, input_shape=(1, dims), kernel_initializer=kInit, bias_initializer=bInit))  #CHANGE MODEL SAVE FILE NAME IF CUSTOM INIT
+model.add(LeakyReLU(alpha=0.1))
 # model.add(Dropout(0.2))
 model.add(Dense(dims*4))
-model.add(LeakyReLU(alpha=0.333))
+model.add(LeakyReLU(alpha=0.2))
 # model.add(Dropout(0.3))
 model.add(LSTM(dims*4, return_sequences=True))
-model.add(LeakyReLU(alpha=0.333))
+model.add(LeakyReLU(alpha=0.2))
 # model.add(Dropout(0.3))
 model.add(LSTM(dims, return_sequences=False))
-model.add(LeakyReLU(alpha=0.222))
-# model.add(Dense(int(np.floor(dims/4))))
-# model.add(LeakyReLU(alpha=0.111))
+model.add(LeakyReLU(alpha=0.2))
+model.add(Dense(int(np.floor(dims/4))))
+model.add(LeakyReLU(alpha=0.1))
 # model.add(Flatten())
-model.add(Dense(1, activation='linear'))
-model.compile(loss="mean_absolute_percentage_error", optimizer=opt, metrics=['accuracy'])
+model.add(Dense(2, activation='softmax'))
+model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=['accuracy'])
 model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX) / b),
                                           epochs=nb_epoch,
                                           verbose=2,
@@ -638,23 +705,38 @@ model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX
 
 for i in range(len(testX)):
     sTXi = np.reshape(testX[i], (testX[i].shape[0], 1, testX[i].shape[1]))
-    pY, rY = model.predict(sTXi)[0][0], testY[i]
-    if (pY > 0 and rY > 0.4) or (pY < 0 and rY < -0.4):
+    pY, rY = model.predict(sTXi)[0], testY[i]
+    # print("sTXi:", sTXi)
+    # print("pY:", pY, "rY:", rY)
+    maxP = max(pY)
+    maxPIx = list(pY).index(maxP)
+    maxY = max(rY)
+    maxYIx = list(rY).index(maxY)
+    if maxPIx == maxYIx:
         passes += 1
     else:
         fails += 1
     # TO-DO: INVERSE ACCURACY
     Ps.append(pY)
-    errs.append(abs(pY - rY)/(rY if (rY > 0.1 or rY < -0.1) else pY) * 100)
+    aPs.append(maxPIx)
+    aTestYs.append(maxYIx)
+    errs.append((abs(pY[0] - rY[0])+abs(pY[1] - rY[1]))/2*100)
     # print("sTXi:", sTXi)
     # print("pY:", pY, "rY:", rY, "err %:", errs[-1])
 
-print("\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY),
+print("\n\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes / len(testY), 
     "Mean Perc. Error:", np.mean(errs))
 
-print("\nPs Describe:", sp.describe(Ps), "Ps Median:", list(sorted(Ps))[int(np.floor(len(Ps)/2))], "\nY Describe:", sp.describe(Y), "Ys Median:", list(sorted(Y))[int(np.floor(len(Y)/2))],"\ntrainY Describe:", sp.describe(trainY), "\ntestY Describe:", sp.describe(testY))
-print(f'\nhsdbENVDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
+for y in trainY:
+    maxTY = max(y)
+    maxTYIx = list(y).index(maxTY)
+    aTrainYs.append(maxTYIx)
+
+print("\nPs Describe:", sp.describe(aPs), "Ps Median:", list(sorted(aPs))[int(np.floor(len(aPs)/2))], "\ntrainY Describe:", sp.describe(aTrainYs), "\ntestY Describe:", sp.describe(aTestYs))
+
+
+print(f'\nhsdbENVDirectionalClassMagnitudeLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
 print("\n\n SAVE MODEL?")
 resp = input()
 if resp in ["y", "yes", "Y", "YES", "save", "SAVE"]:
-    model.save(f'../models/hsdbENVDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
+    model.save(f'../models/hsdbENVDirectionalClassMagnitudeLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
