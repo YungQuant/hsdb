@@ -244,7 +244,7 @@ def forzaLinear(currency="BMEX_XBTUSD2_100kus", depth=30, p=1, s=1, header=""):
     if os.path.isfile(path) == False:
         print(f'\ncould not source {path} data\n')
     else:
-        fileP = open(path, "r")
+        fileP = open(path, "r", errors="ignore")
         lines = fileP.readlines()
         lines = lines[:int(np.floor(p * len(lines)))]
 
@@ -539,8 +539,10 @@ def getTarget(envSet, target):
         for k in keys:
             for j in envSet[k]["X"][i]:
                 datum.append(j)
-        X.append(datum)
-        Y.append(envSet[target]["Y"][i])
+        y = envSet[target]["Y"][i]
+        if y < 1 and y > -1:
+            X.append(datum)
+            Y.append(envSet[target]["Y"][i])
     
     return X, Y
 
@@ -553,22 +555,21 @@ def getTarget(envSet, target):
 # path = input("Enter data path:")
 
 timeStr = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%Z")
-header = "668"; suffix = "_1mus"
+header = "669c"; suffix = "_1mus"
 currencies = ["XBTUSD", "ADAM19", "BCHM19", "EOSM19", "ETHUSD", "LTCM19", "TRXM19", "XRPM19"]
-Dsets = ["HSDBENVdirectionalLSTM0-MidPeak-Linear-Din2-dist10-lookback60-perc0.99-sparcity1-attention-60-interest0.3-header668c-targetXBTUSD.txt",
-"HSDBENVdirectionalLSTM0-MidPeak-LinearPerc-Din2-dist10-lookback120-perc0.99-sparcity1-attention-60-interest0.001-header669c-targetADAM19.txt"]
-target = currencies[1]
+Dsets = ["HSDBENVdirectionalLSTM0-MidPeak-LinearPerc-Din3-dist6-lookback100-perc0.99-sparcity10-attention-6-interest0.001-header669c-targetXBTUSD.txt"]
+target = currencies[0]
 errs, Ps, passes, fails = [], [], 0, 0
-Din = 2; dist = 10; perc = 0.99; c = 1.5; b = 32; nb_epoch = 50; l = 120; opt = "Adamax"; s = 1; scale = 10000000; vO = True
-attention = 60; interest = 0.001; vFilter = "adaptive"; g = (10 if vFilter == "grouping" else 1); pF = True
+Din = 3; dist = 6; perc = 0.99; c = 1.5; b = 32; nb_epoch = 50; l = 100; opt = "Adadelta"; s = 10; scale = 10000000; vO = True
+attention = 6; interest = 0.001; vFilter = "adaptive"; g = (10 if vFilter == "grouping" else 1); pF = True
 
-x = getEnv(header, suffix, currencies, Din, perc, s, scale, vFilter, g, pF, dist, l, vO)
-x, y = getTarget(x, target)
-X, Y = volatilityAdaptiveFilter(x, y, attention, interest)
+# x = getEnv(header, suffix, currencies, Din, perc, s, scale, vFilter, g, pF, dist, l, vO)
+# x, y = getTarget(x, target)
+# X, Y = volatilityAdaptiveFilter(x, y, attention, interest)
 
-# X, Y = readDataset(Dsets[1])
+X, Y = readDataset(Dsets[0])
 plot(Y)
-writeDirectionalDataset(X, Y, f'../../datasets/HSDBENVdirectionalLSTM0-MidPeak-LinearPerc-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-attention-{attention}-interest{interest}-header{header}-target{target}')
+# writeDirectionalDataset(X, Y, f'../../datasets/HSDBENVdirectionalLSTM0-MidPeak-LinearPerc-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-attention-{attention}-interest{interest}-header{header}-target{target}')
 # writeDirectionalDataset(X, Y, f'../../datasets/HSDBdirectionalLSTM0-MidPeak-VolAdaptivePerc-Din{Din}-dist{dist}-lookback{l}-perc{perc}-sparcity{s}-scale{scale}-vO{vO}-pF{pF}-attention-{attention}-interest{interest}-vFilter{vFilter}-grouping{g}-dataset{path}')
 # print("X0: ", X[0], " Y0 ", Y[0])
 print("\nmean/min/max(Y):", np.mean(Y), min(Y), max(Y), "\n")
@@ -597,8 +598,8 @@ stop = EarlyStopping(patience=10)
 #                                         monitor='val_acc', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 logF = f'../logs/hsdbDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}_time{timeStr}.txt'
 # opt = keras.optimizers.Adam(lr=0.00000666, epsilon=0.00000001, decay=0.001, amsgrad=True)
-# opt = keras.optimizers.SGD(lr=0.001, momentum=0.0, decay=0.0, nesterov=False)
-opt = keras.optimizers.RMSprop(lr=0.1, rho=0.99, epsilon=None, decay=0.0)
+# opt = keras.optimizers.SGD(lr=0.1, momentum=0.0, decay=0.0, nesterov=False)
+# opt = keras.optimizers.RMSprop(lr=0.1, rho=0.99, epsilon=None, decay=0.0)
 # opt = keras.optimizers.Adagrad(lr=0.000001, epsilon=None, decay=0.666)
 # opt = keras.optimizers.Adadelta(lr=0.00000001, rho=0.95, epsilon=None, decay=0.0)
 # opt = keras.optimizers.Adamax(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0)
@@ -622,7 +623,7 @@ model.add(LeakyReLU(alpha=0.222))
 # model.add(LeakyReLU(alpha=0.111))
 # model.add(Flatten())
 model.add(Dense(1, activation='linear'))
-model.compile(loss="mean_absolute_percentage_error", optimizer=opt, metrics=['accuracy'])
+model.compile(loss="mean_squared_error", optimizer=opt, metrics=['accuracy'])
 model.fit_generator(hsdbSequence(trainX, trainY, b), steps_per_epoch=(len(trainX) / b),
                                           epochs=nb_epoch,
                                           verbose=2,
@@ -653,8 +654,8 @@ print("\nAggregate Binary Accuracy:", passes, "/", len(testY), "ABA%:", passes /
     "Mean Perc. Error:", np.mean(errs))
 
 print("\nPs Describe:", sp.describe(Ps), "Ps Median:", list(sorted(Ps))[int(np.floor(len(Ps)/2))], "\nY Describe:", sp.describe(Y), "Ys Median:", list(sorted(Y))[int(np.floor(len(Y)/2))],"\ntrainY Describe:", sp.describe(trainY), "\ntestY Describe:", sp.describe(testY))
-print(f'\nhsdbENVDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
+print(f'\nhsdbENVDirectionalLSTMModel0-target{target}-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
 print("\n\n SAVE MODEL?")
 resp = input()
 if resp in ["y", "yes", "Y", "YES", "save", "SAVE"]:
-    model.save(f'../models/hsdbENVDirectionalLSTMModel0-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')
+    model.save(f'../models/hsdbENVDirectionalLSTMModel0-target{target}-Din{Din}-dist{dist}-lookback{l}-batch{b}-opt{opt}-epoch{nb_epoch}-mpe{np.mean(errs)}-aba{passes / len(testY)}-{timeStr}.h5')

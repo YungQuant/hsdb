@@ -1,3 +1,37 @@
+yungquant@BladeD:~/Divi/divi$ sh autogen.sh
+libtoolize: putting auxiliary files in AC_CONFIG_AUX_DIR, 'build-aux'.
+libtoolize: copying file 'build-aux/ltmain.sh'
+libtoolize: putting macros in AC_CONFIG_MACRO_DIRS, 'build-aux/m4'.
+libtoolize: copying file 'build-aux/m4/libtool.m4'
+libtoolize: copying file 'build-aux/m4/ltoptions.m4'
+libtoolize: copying file 'build-aux/m4/ltsugar.m4'
+libtoolize: copying file 'build-aux/m4/ltversion.m4'
+libtoolize: copying file 'build-aux/m4/lt~obsolete.m4'
+configure.ac:10: installing 'build-aux/compile'
+configure.ac:9: installing 'build-aux/missing'
+Makefile.am: installing 'build-aux/depcomp'
+libtoolize: putting auxiliary files in AC_CONFIG_AUX_DIR, 'build-aux'.
+libtoolize: copying file 'build-aux/ltmain.sh'
+libtoolize: putting macros in AC_CONFIG_MACRO_DIRS, 'build-aux/m4'.
+libtoolize: copying file 'build-aux/m4/libtool.m4'
+libtoolize: copying file 'build-aux/m4/ltoptions.m4'
+libtoolize: copying file 'build-aux/m4/ltsugar.m4'
+libtoolize: copying file 'build-aux/m4/ltversion.m4'
+libtoolize: copying file 'build-aux/m4/lt~obsolete.m4'
+configure.ac:69: installing 'build-aux/compile'
+configure.ac:30: installing 'build-aux/missing'
+Makefile.am:9: warning: user variable 'GZIP_ENV' defined here ...
+/usr/share/automake-1.15/am/distdir.am: ... overrides Automake variable 'GZIP_ENV' defined here
+Makefile.am:61: warning: user target 'distcleancheck' defined here ...
+/usr/share/automake-1.15/am/distdir.am: ... overrides Automake target 'distcleancheck' defined here
+src/Makefile.am: installing 'build-aux/depcomp'
+src/Makefile.am:546: warning: user target '.mm.o' defined here ...
+/usr/share/automake-1.15/am/depend2.am: ... overrides Automake target '.mm.o' defined here
+yungquant@BladeD:~/Divi/divi$ make
+make: *** No targets specified and no makefile found.  Stop.
+yungquant@BladeD:~/Divi/divi$ make install
+make: *** No rule to make target 'install'.  Stop.
+yungquant@BladeD:~/Divi/divi$ 
 
 
 
